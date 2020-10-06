@@ -1,0 +1,59 @@
+S2D Changelog
+
+--v1.5 (19/08/2014)--
+Updated to Visual Studio 2013
+
+--v1.4 (19/01/2014)--
+Fixed an issue which could cause slow down when setting a preferred FPS
+
+--v1.3 (13/01/2014)--
+Fixed Input::KeyboardState::GetPressedKeys()
+
+--v1.2 (30/12/2013)--
+Added Alpha to Color class
+SpriteBatch Drawing methods now honour Alpha colours
+New GetData method on Texture2D to return a Color array 
+
+--v1.1 (12/11/2013)--
+Fixed issue with drawing rectangles
+IsKeyUp now works correctly before key is pushed
+Implemented KeyboardState::GetPressedKeys and Graphics::SetClearColor
+
+--v1.0 (25/10/2013)--
+Completed Documentation - http://www.fces.staffs.ac.uk/pfb1/s2d/
+Added additional comments
+Changes GraphicsManager to Graphics
+
+--v0.6 (29/09/2013)--
+Renamed various methods for continuity
+Done a little housekeeping
+Now only need to import S2D.h
+Fixed Memory leaks in Texture2D and SpriteBatch
+
+--v0.5 (14/09/2013)--
+Now draws from top left instead of bottom left
+Some new Rect methods (Still more to do)
+
+--v0.4 (13/09/2013)--
+Vector2 Methods and Operators implemented
+New MathHelper methods
+Misc bug fixes
+
+--V0.3 (22/08/2013)--
+Added SOIL support for extra Texture file type support
+New Audio Engine using OpenAL and Alure
+Implemented MathHelper
+Fullscreen support
+
+--V0.2 (03/08/2013)--
+Included further Keyboard Input such as Return, Backspace, Delete, Numpad Keys
+Fixed an issue with 128x128 TGA Textures not displaying
+
+--V0.1 (01/08/2013)--
+- Initial Release
+- Game Class to Handle Game Update Draw loop
+- GraphicsManager to Hangle all graphical set up
+- SpriteBatch to handle drawing of 2D Sprites
+- Texture2D to deal with loadsing TGA and RAW texture files
+- Input class to handle Mouse and Keyboard Input
+- Vector2 and Rect class to aid with game logic
