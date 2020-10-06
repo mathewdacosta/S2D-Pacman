@@ -4,114 +4,166 @@
 
 Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 {
-	_frameCount = 0;
+    _frameCount = 0;
 
-	//Initialise important Game aspects
-	Graphics::Initialise(argc, argv, this, 1024, 768, false, 25, 25, "Pacman", 60);
-	Input::Initialise();
+    //Initialise important Game aspects
+    Graphics::Initialise(argc, argv, this, SCREEN_WIDTH, SCREEN_HEIGHT, false, 25, 25, "Pacman", 60);
+    Input::Initialise();
 
-	// Start the Game Loop - This calls Update and Draw in game loop
-	Graphics::StartGameLoop();
+    // Start the Game Loop - This calls Update and Draw in game loop
+    Graphics::StartGameLoop();
 }
 
 Pacman::~Pacman()
 {
-	delete _pacmanTexture;
-	delete _pacmanSourceRect;
-	delete _munchieBlueTexture;
-	delete _munchieInvertedTexture;
-	delete _munchieRect;
+    delete _pacmanTexture;
+    delete _pacmanSourceRect;
+    delete _munchieBlueTexture;
+    delete _munchieInvertedTexture;
+    delete _munchieRect;
 }
 
 void Pacman::LoadContent()
 {
-	// Load Pacman
-	_pacmanTexture = new Texture2D();
-	_pacmanTexture->Load("Textures/Pacman.tga", false);
-	_pacmanPosition = new Vector2(350.0f, 350.0f);
-	_pacmanSourceRect = new Rect(0.0f, 0.0f, 32, 32);
+    // Load Pacman
+    _pacmanTexture = new Texture2D();
+    _pacmanTexture->Load("Textures/Pacman.tga", false);
+    _pacmanPosition = new Vector2(350.0f, 350.0f);
+    _pacmanSourceRect = new Rect(0.0f, 0.0f, 32, 32);
+    _pacmanAnimFrame = 0;
 
-	// Load Munchie
-	_munchieBlueTexture = new Texture2D();
-	_munchieBlueTexture->Load("Textures/Munchie.tga", true);
-	_munchieInvertedTexture = new Texture2D();
-	_munchieInvertedTexture->Load("Textures/MunchieInverted.tga", true);
-	_munchieRect = new Rect(100.0f, 450.0f, 12, 12);
+    // Load Munchie
+    _munchieBlueTexture = new Texture2D();
+    _munchieBlueTexture->Load("Textures/Munchie.tga", true);
+    _munchieInvertedTexture = new Texture2D();
+    _munchieInvertedTexture->Load("Textures/MunchieInverted.tga", true);
+    _munchieRect = new Rect(100.0f, 450.0f, 12, 12);
 
-	// Set string position
-	_stringPosition = new Vector2(10.0f, 25.0f);
+    // Set string position
+    _stringPosition = new Vector2(10.0f, 25.0f);
 }
 
 void Pacman::Update(int elapsedTime)
 {
-	/* ====== INPUT ====== */
-	
-	// Gets the current state of the keyboard
-	Input::KeyboardState* keyboardState = Input::Keyboard::GetState();
+    /* ====== INPUT ====== */
 
-	if (keyboardState->IsKeyDown(Input::Keys::D)) // Checks if D key is pressed
-		_pacmanPosition->X += 0.1f * elapsedTime; // Moves Pacman +x
+    // Gets the current state of the keyboard
+    Input::KeyboardState* keyboardState = Input::Keyboard::GetState();
 
-	if (keyboardState->IsKeyDown(Input::Keys::A)) // Checks if A key is pressed
-		_pacmanPosition->X -= 0.1f * elapsedTime; // Moves Pacman -x
+    if (keyboardState->IsKeyDown(Input::Keys::D)) // Checks if D key is pressed
+    {
+        _pacmanPosition->X += 0.1f * elapsedTime; // Moves Pacman +x
+        _pacmanSourceRect->Y = 0;
+    }
 
-	if (keyboardState->IsKeyDown(Input::Keys::S)) // Checks if S key is pressed
-		_pacmanPosition->Y += 0.1f * elapsedTime; // Moves Pacman +y
-
-	if (keyboardState->IsKeyDown(Input::Keys::W)) // Checks if W key is pressed
-		_pacmanPosition->Y -= 0.1f * elapsedTime; // Moves Pacman -y
-
-	/* ====== WALL COLLISION ====== */
-
-	if (_pacmanPosition->X + _pacmanSourceRect->Width > 1024) // if right edge > screen width
-	{
-		_pacmanPosition->X = 1024 - _pacmanSourceRect->Width;
-	}
-
-	if (_pacmanPosition->X < 0) // if left edge < 0
-	{
-		_pacmanPosition->X = 0;
-	}
-	
-	if (_pacmanPosition->Y + _pacmanSourceRect->Height > 768) // if bottom edge > screen height
-	{
-		_pacmanPosition->Y = 768 - _pacmanSourceRect->Height;
-	}
-
-	if (_pacmanPosition->Y < 0) // if top edge < 0
-	{
-		_pacmanPosition->Y = 0;
-	}
+    if (keyboardState->IsKeyDown(Input::Keys::A)) // Checks if A key is pressed
+    {
+        _pacmanPosition->X -= 0.1f * elapsedTime; // Moves Pacman -x
+        _pacmanSourceRect->Y = 64;
+    }
+    
+    if (keyboardState->IsKeyDown(Input::Keys::S)) // Checks if S key is pressed
+    {
+        _pacmanPosition->Y += 0.1f * elapsedTime; // Moves Pacman +y
+        _pacmanSourceRect->Y = 32;
+    }
+    
+    if (keyboardState->IsKeyDown(Input::Keys::W)) // Checks if W key is pressed
+    {
+        _pacmanPosition->Y -= 0.1f * elapsedTime; // Moves Pacman -y
+        _pacmanSourceRect->Y = 96;
+    }
+    
+    /* ====== WALL COLLISION ====== */
+    DoWallCollision();
 }
 
 void Pacman::Draw(int elapsedTime)
 {
-	// Allows us to easily create a string
-	std::stringstream stream;
-	stream << "Pacman X: " << _pacmanPosition->X << " Y: " << _pacmanPosition->Y;
+    // Allows us to easily create a string
+    std::stringstream stream;
+    stream << "Pacman X: " << _pacmanPosition->X << " Y: " << _pacmanPosition->Y;
 
-	SpriteBatch::BeginDraw(); // Starts Drawing
-	SpriteBatch::Draw(_pacmanTexture, _pacmanPosition, _pacmanSourceRect); // Draws Pacman
+    SpriteBatch::BeginDraw(); // Starts Drawing
 
-	if (_frameCount < 30)
+    // Increment animation frame every 12 frames
+    // TODO: stop sharing this with munchie
+    if (_frameCount % 12 == 0)
+    {
+        _pacmanAnimFrame = (_pacmanAnimFrame + 1) % CHARACTER_FRAMES;
+        _pacmanSourceRect->X = _pacmanAnimFrame * 32;        
+    }
+    SpriteBatch::Draw(_pacmanTexture, _pacmanPosition, _pacmanSourceRect); // Draws Pacman
+
+    if (_frameCount < 30)
+    {
+        // Draws Red Munchie
+        SpriteBatch::Draw(_munchieInvertedTexture, _munchieRect, nullptr, Vector2::Zero, 1.0f, 0.0f, Color::White,
+                          SpriteEffect::NONE);
+
+        _frameCount++;
+    }
+    else
+    {
+        // Draw Blue Munchie
+        SpriteBatch::Draw(_munchieBlueTexture, _munchieRect, nullptr, Vector2::Zero, 1.0f, 0.0f, Color::White,
+                          SpriteEffect::NONE);
+
+        _frameCount++;
+
+        if (_frameCount >= 60)
+            _frameCount = 0;
+    }
+
+    // Draws String
+    SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
+    SpriteBatch::EndDraw(); // Ends Drawing
+}
+
+void Pacman::DoWallCollision()
+{
+#if LEVEL_WRAP == 1
+	float centreX = _pacmanPosition->X + (_pacmanSourceRect->Width / 2);
+	float centreY = _pacmanPosition->Y + (_pacmanSourceRect->Height / 2);
+	
+	if (centreX > SCREEN_WIDTH) // if centre X coord > screen width
 	{
-		// Draws Red Munchie
-		SpriteBatch::Draw(_munchieInvertedTexture, _munchieRect, nullptr, Vector2::Zero, 1.0f, 0.0f, Color::White, SpriteEffect::NONE);
-
-		_frameCount++;
+		_pacmanPosition->X -= SCREEN_WIDTH;
 	}
-	else
-	{
-		// Draw Blue Munchie
-		SpriteBatch::Draw(_munchieBlueTexture, _munchieRect, nullptr, Vector2::Zero, 1.0f, 0.0f, Color::White, SpriteEffect::NONE);
-		
-		_frameCount++;
 
-		if (_frameCount >= 60)
-			_frameCount = 0;
+	if (centreX < 0) // if centre X coord < 0
+	{
+		_pacmanPosition->X += SCREEN_WIDTH;
 	}
 	
-	// Draws String
-	SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
-	SpriteBatch::EndDraw(); // Ends Drawing
+	if (centreY > SCREEN_HEIGHT) // if centre Y coord > screen height
+	{
+		_pacmanPosition->Y -= SCREEN_HEIGHT;
+	}
+
+	if (centreY < 0) // if centre Y coord < 0
+	{
+		_pacmanPosition->Y += SCREEN_HEIGHT;
+	}
+#else
+    if (_pacmanPosition->X + _pacmanSourceRect->Width > SCREEN_WIDTH) // if right edge > screen width
+    {
+        _pacmanPosition->X = SCREEN_WIDTH - _pacmanSourceRect->Width;
+    }
+
+    if (_pacmanPosition->X < 0) // if left edge < 0
+    {
+        _pacmanPosition->X = 0;
+    }
+
+    if (_pacmanPosition->Y + _pacmanSourceRect->Height > SCREEN_HEIGHT) // if bottom edge > screen height
+    {
+        _pacmanPosition->Y = SCREEN_HEIGHT - _pacmanSourceRect->Height;
+    }
+
+    if (_pacmanPosition->Y < 0) // if top edge < 0
+    {
+        _pacmanPosition->Y = 0;
+    }
+#endif
 }

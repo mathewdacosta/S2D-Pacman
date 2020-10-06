@@ -8,11 +8,25 @@
 	#endif
 #endif
 
+
 // Just need to include main header file
 #include "S2D/S2D.h"
 
 // Reduces the amount of typing by including all classes in S2D namespace
 using namespace S2D;
+
+
+// Screen width and height
+#define SCREEN_WIDTH 1024
+#define SCREEN_HEIGHT 768
+
+// Determines whether wrapping around the level is enabled
+// 0 = hard level borders, 1 = level wrapping enabled
+#define LEVEL_WRAP 1
+
+// Number of Pacman animation frames
+#define CHARACTER_FRAMES 2
+
 
 // Declares the Pacman class which inherits from the Game class.
 // This allows us to overload the Game class methods to help us
@@ -24,6 +38,7 @@ private:
 	Vector2* _pacmanPosition; // position on screen
 	Rect* _pacmanSourceRect; // current location in tilemap
 	Texture2D* _pacmanTexture; // tilemap
+	int _pacmanAnimFrame; // current frame in animation
 
 	// Data to represent Munchie
 	int _frameCount;
@@ -33,6 +48,8 @@ private:
 
 	// Position for String
 	Vector2* _stringPosition;
+
+	void virtual DoWallCollision();
 
 public:
 	/// <summary> Constructs the Pacman class. </summary>
