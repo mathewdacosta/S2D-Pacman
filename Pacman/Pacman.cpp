@@ -5,6 +5,8 @@
 Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cPacmanSpeed(0.1f)
 {
     _frameCount = 0;
+    _paused = false;
+    _pKeyDown = false;
 
     //Initialise important Game aspects
     Graphics::Initialise(argc, argv, this, SCREEN_WIDTH, SCREEN_HEIGHT, false, 25, 25, "Pacman", 60);
@@ -25,6 +27,12 @@ Pacman::~Pacman()
 
 void Pacman::LoadContent()
 {
+    // Set up menu
+    _menuBackground = new Texture2D();
+    _menuBackground->Load("Textures/Transparency.png", false);
+    _menuRectangle = new Rect(0.0f, 0.0f, Graphics::GetViewportWidth(), Graphics::GetViewportHeight());
+    _menuStringPosition = new Vector2(Graphics::GetViewportWidth() / 2.0f, Graphics::GetViewportHeight() / 2.0f);
+    
     // Load Pacman
     _pacmanTexture = new Texture2D();
     _pacmanTexture->Load("Textures/Pacman.tga", false);
@@ -46,10 +54,24 @@ void Pacman::LoadContent()
 
 void Pacman::Update(int elapsedTime)
 {
-    /* ====== INPUT ====== */
-
     // Gets the current state of the keyboard
     Input::KeyboardState* keyboardState = Input::Keyboard::GetState();
+
+    /* ====== PAUSE ====== */
+    if (keyboardState->IsKeyDown(Input::Keys::P) && !_pKeyDown)
+    {
+        _paused = !_paused;
+        _pKeyDown = true;
+    }
+
+    if (keyboardState->IsKeyUp(Input::Keys::P))
+    {
+        _pKeyDown = false;
+    }
+
+    if (_paused) return; 
+    
+    /* ====== INPUT ====== */
 
     if (keyboardState->IsKeyDown(Input::Keys::D)) // Checks if D key is pressed
     {
@@ -140,6 +162,16 @@ void Pacman::Draw(int elapsedTime)
 
     // Draws String
     SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
+
+    if (_paused)
+    {
+        std::stringstream menuStream;
+        menuStream << "PAUSED!";
+
+        SpriteBatch::Draw(_menuBackground, _menuRectangle, nullptr);
+        SpriteBatch::DrawString(menuStream.str().c_str(), _menuStringPosition, Color::Red);
+    }
+    
     SpriteBatch::EndDraw(); // Ends Drawing
 }
 

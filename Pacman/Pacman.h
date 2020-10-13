@@ -32,6 +32,13 @@ enum class MoveDirection { Up, Right, Down, Left };
 class Pacman : public Game
 {
 private:
+	// Data for menu
+	Texture2D* _menuBackground;
+	Rect* _menuRectangle;
+	Vector2* _menuStringPosition;
+	bool _paused;
+	bool _pKeyDown;
+
 	// Data to represent Pacman
 	const float _cPacmanSpeed; // movement speed
 
