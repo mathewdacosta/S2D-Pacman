@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
+Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cPacmanSpeed(0.1f)
 {
     _frameCount = 0;
 
@@ -31,6 +31,7 @@ void Pacman::LoadContent()
     _pacmanPosition = new Vector2(350.0f, 350.0f);
     _pacmanSourceRect = new Rect(0.0f, 0.0f, 32, 32);
     _pacmanAnimFrame = 0;
+    _pacmanDirection = MoveDirection::Right;
 
     // Load Munchie
     _munchieBlueTexture = new Texture2D();
@@ -52,26 +53,48 @@ void Pacman::Update(int elapsedTime)
 
     if (keyboardState->IsKeyDown(Input::Keys::D)) // Checks if D key is pressed
     {
-        _pacmanPosition->X += 0.1f * elapsedTime; // Moves Pacman +x
+        _pacmanDirection = MoveDirection::Right;
         _pacmanSourceRect->Y = 0;
     }
 
     if (keyboardState->IsKeyDown(Input::Keys::A)) // Checks if A key is pressed
     {
-        _pacmanPosition->X -= 0.1f * elapsedTime; // Moves Pacman -x
+        _pacmanDirection = MoveDirection::Left;
         _pacmanSourceRect->Y = 64;
     }
     
     if (keyboardState->IsKeyDown(Input::Keys::S)) // Checks if S key is pressed
     {
-        _pacmanPosition->Y += 0.1f * elapsedTime; // Moves Pacman +y
+        _pacmanDirection = MoveDirection::Down;
         _pacmanSourceRect->Y = 32;
     }
     
     if (keyboardState->IsKeyDown(Input::Keys::W)) // Checks if W key is pressed
     {
-        _pacmanPosition->Y -= 0.1f * elapsedTime; // Moves Pacman -y
+        _pacmanDirection = MoveDirection::Up;
         _pacmanSourceRect->Y = 96;
+    }
+    
+    /* ====== MOVEMENT ====== */
+
+    if (_pacmanDirection == MoveDirection::Right) // Checks if D key is pressed
+    {
+        _pacmanPosition->X += _cPacmanSpeed * elapsedTime; // Moves Pacman +x
+    }
+
+    if (_pacmanDirection == MoveDirection::Left) // Checks if A key is pressed
+    {
+        _pacmanPosition->X -= _cPacmanSpeed * elapsedTime; // Moves Pacman -x
+    }
+    
+    if (_pacmanDirection == MoveDirection::Down) // Checks if S key is pressed
+    {
+        _pacmanPosition->Y += _cPacmanSpeed * elapsedTime; // Moves Pacman +y
+    }
+    
+    if (_pacmanDirection == MoveDirection::Up) // Checks if W key is pressed
+    {
+        _pacmanPosition->Y -= _cPacmanSpeed * elapsedTime; // Moves Pacman -y
     }
     
     /* ====== WALL COLLISION ====== */
