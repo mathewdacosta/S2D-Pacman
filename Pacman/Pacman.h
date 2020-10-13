@@ -20,10 +20,6 @@ using namespace S2D;
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 768
 
-// Determines whether wrapping around the level is enabled
-// 0 = hard level borders, 1 = level wrapping enabled
-#define LEVEL_WRAP 1
-
 // Number of Pacman animation frames
 #define CHARACTER_FRAMES 2
 
@@ -49,7 +45,7 @@ private:
 	// Position for String
 	Vector2* _stringPosition;
 
-	void virtual DoWallCollision();
+	void virtual DoWallWrap();
 
 public:
 	/// <summary> Constructs the Pacman class. </summary>

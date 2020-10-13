@@ -75,7 +75,7 @@ void Pacman::Update(int elapsedTime)
     }
     
     /* ====== WALL COLLISION ====== */
-    DoWallCollision();
+    DoWallWrap();
 }
 
 void Pacman::Draw(int elapsedTime)
@@ -120,50 +120,28 @@ void Pacman::Draw(int elapsedTime)
     SpriteBatch::EndDraw(); // Ends Drawing
 }
 
-void Pacman::DoWallCollision()
+void Pacman::DoWallWrap()
 {
-#if LEVEL_WRAP == 1
 	float centreX = _pacmanPosition->X + (_pacmanSourceRect->Width / 2);
 	float centreY = _pacmanPosition->Y + (_pacmanSourceRect->Height / 2);
 	
-	if (centreX > SCREEN_WIDTH) // if centre X coord > screen width
+	if (centreX > Graphics::GetViewportWidth()) // if centre X coord > screen width
 	{
-		_pacmanPosition->X -= SCREEN_WIDTH;
+		_pacmanPosition->X -= Graphics::GetViewportWidth();
 	}
 
 	if (centreX < 0) // if centre X coord < 0
 	{
-		_pacmanPosition->X += SCREEN_WIDTH;
+		_pacmanPosition->X += Graphics::GetViewportWidth();
 	}
 	
-	if (centreY > SCREEN_HEIGHT) // if centre Y coord > screen height
+    if (centreY > Graphics::GetViewportHeight()) // if centre Y coord > screen height
 	{
-		_pacmanPosition->Y -= SCREEN_HEIGHT;
+        _pacmanPosition->Y -= Graphics::GetViewportHeight();
 	}
 
 	if (centreY < 0) // if centre Y coord < 0
 	{
-		_pacmanPosition->Y += SCREEN_HEIGHT;
+		_pacmanPosition->Y += Graphics::GetViewportHeight();
 	}
-#else
-    if (_pacmanPosition->X + _pacmanSourceRect->Width > SCREEN_WIDTH) // if right edge > screen width
-    {
-        _pacmanPosition->X = SCREEN_WIDTH - _pacmanSourceRect->Width;
-    }
-
-    if (_pacmanPosition->X < 0) // if left edge < 0
-    {
-        _pacmanPosition->X = 0;
-    }
-
-    if (_pacmanPosition->Y + _pacmanSourceRect->Height > SCREEN_HEIGHT) // if bottom edge > screen height
-    {
-        _pacmanPosition->Y = SCREEN_HEIGHT - _pacmanSourceRect->Height;
-    }
-
-    if (_pacmanPosition->Y < 0) // if top edge < 0
-    {
-        _pacmanPosition->Y = 0;
-    }
-#endif
 }
