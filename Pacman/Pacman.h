@@ -35,9 +35,17 @@ private:
 	// Data for menu
 	Texture2D* _menuBackground;
 	Rect* _menuRectangle;
-	Vector2* _menuStringPosition;
+	bool _started;
+	bool _spaceKeyDown;
 	bool _paused;
 	bool _pKeyDown;
+
+	Texture2D* _menuTextTexture;
+	Rect* _menuPausedSourceRect;
+	Rect* _menuPausedDestRect;
+	Rect* _menuLogoSourceRect;
+	Rect* _menuLogoDestRect;
+	Vector2* _menuHelpPosition;
 
 	// Data to represent Pacman
 	const float _cPacmanSpeed; // movement speed

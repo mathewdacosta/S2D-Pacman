@@ -5,11 +5,12 @@
 Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cPacmanSpeed(0.1f)
 {
     _frameCount = 0;
+    _started = false;
     _paused = false;
     _pKeyDown = false;
 
     //Initialise important Game aspects
-    Graphics::Initialise(argc, argv, this, SCREEN_WIDTH, SCREEN_HEIGHT, false, 25, 25, "Pacman", 60);
+    Graphics::Initialise(argc, argv, this, SCREEN_WIDTH, SCREEN_HEIGHT, false, 25, 25, "Logo here: The Game", 60);
     Input::Initialise();
 
     // Start the Game Loop - This calls Update and Draw in game loop
@@ -31,7 +32,22 @@ void Pacman::LoadContent()
     _menuBackground = new Texture2D();
     _menuBackground->Load("Textures/Transparency.png", false);
     _menuRectangle = new Rect(0.0f, 0.0f, Graphics::GetViewportWidth(), Graphics::GetViewportHeight());
-    _menuStringPosition = new Vector2(Graphics::GetViewportWidth() / 2.0f, Graphics::GetViewportHeight() / 2.0f);
+
+    _menuTextTexture = new Texture2D();
+    _menuTextTexture->Load("Textures/MenuText.png", false);
+    _menuPausedSourceRect = new Rect(0.0f, 0.0f, 200, 40);
+    _menuPausedDestRect = new Rect(
+        (Graphics::GetViewportWidth() - _menuPausedSourceRect->Width) / 2.0f,
+        (Graphics::GetViewportHeight() - _menuPausedSourceRect->Height) / 2.0f,
+        _menuPausedSourceRect->Width,
+        _menuPausedSourceRect->Height);
+    _menuLogoSourceRect = new Rect(0.0f, 40.0f, 215, 47);
+    _menuLogoDestRect = new Rect(
+        (Graphics::GetViewportWidth() - _menuLogoSourceRect->Width) / 2.0f,
+        (Graphics::GetViewportHeight() / 3.0f) - (_menuLogoSourceRect->Height / 2.0f),
+        _menuLogoSourceRect->Width,
+        _menuLogoSourceRect->Height);
+    _menuHelpPosition = new Vector2(10, 740);
     
     // Load Pacman
     _pacmanTexture = new Texture2D();
@@ -56,6 +72,14 @@ void Pacman::Update(int elapsedTime)
 {
     // Gets the current state of the keyboard
     Input::KeyboardState* keyboardState = Input::Keyboard::GetState();
+
+    /* ====== START ====== */
+    if (!_started && keyboardState->IsKeyDown(Input::Keys::SPACE))
+    {
+        _started = true;
+    }
+
+    if (!_started) return;
 
     /* ====== PAUSE ====== */
     if (keyboardState->IsKeyDown(Input::Keys::P) && !_pKeyDown)
@@ -125,51 +149,60 @@ void Pacman::Update(int elapsedTime)
 
 void Pacman::Draw(int elapsedTime)
 {
-    // Allows us to easily create a string
-    std::stringstream stream;
-    stream << "Pacman X: " << _pacmanPosition->X << " Y: " << _pacmanPosition->Y;
 
     SpriteBatch::BeginDraw(); // Starts Drawing
 
-    // Increment animation frame every 12 frames
-    // TODO: stop sharing this with munchie
-    if (_frameCount % 12 == 0)
+    if (_started)
     {
-        _pacmanAnimFrame = (_pacmanAnimFrame + 1) % CHARACTER_FRAMES;
-        _pacmanSourceRect->X = _pacmanAnimFrame * 32;        
-    }
-    SpriteBatch::Draw(_pacmanTexture, _pacmanPosition, _pacmanSourceRect); // Draws Pacman
+        // Allows us to easily create a string
+        std::stringstream stream;
+        stream << "Pacman X: " << _pacmanPosition->X << " Y: " << _pacmanPosition->Y;
+        
+        // Increment animation frame every 12 frames
+        // TODO: stop sharing this with munchie
+        if (_frameCount % 12 == 0)
+        {
+            _pacmanAnimFrame = (_pacmanAnimFrame + 1) % CHARACTER_FRAMES;
+            _pacmanSourceRect->X = _pacmanAnimFrame * 32;        
+        }
+        SpriteBatch::Draw(_pacmanTexture, _pacmanPosition, _pacmanSourceRect); // Draws Pacman
 
-    if (_frameCount < 30)
-    {
-        // Draws Red Munchie
-        SpriteBatch::Draw(_munchieInvertedTexture, _munchieRect, nullptr, Vector2::Zero, 1.0f, 0.0f, Color::White,
-                          SpriteEffect::NONE);
+        if (_frameCount < 30)
+        {
+            // Draws Red Munchie
+            SpriteBatch::Draw(_munchieInvertedTexture, _munchieRect, nullptr, Vector2::Zero, 1.0f, 0.0f, Color::White,
+                              SpriteEffect::NONE);
 
-        _frameCount++;
+            _frameCount++;
+        }
+        else
+        {
+            // Draw Blue Munchie
+            SpriteBatch::Draw(_munchieBlueTexture, _munchieRect, nullptr, Vector2::Zero, 1.0f, 0.0f, Color::White,
+                              SpriteEffect::NONE);
+
+            _frameCount++;
+
+            if (_frameCount >= 60)
+                _frameCount = 0;
+        }
+
+        // Draws String
+        SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
+
+        // Draw pause menu
+        if (_paused)
+        {
+            SpriteBatch::Draw(_menuBackground, _menuRectangle, nullptr);
+            SpriteBatch::Draw(_menuTextTexture, _menuPausedDestRect, _menuPausedSourceRect);
+        }
     }
     else
     {
-        // Draw Blue Munchie
-        SpriteBatch::Draw(_munchieBlueTexture, _munchieRect, nullptr, Vector2::Zero, 1.0f, 0.0f, Color::White,
-                          SpriteEffect::NONE);
-
-        _frameCount++;
-
-        if (_frameCount >= 60)
-            _frameCount = 0;
-    }
-
-    // Draws String
-    SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
-
-    if (_paused)
-    {
-        std::stringstream menuStream;
-        menuStream << "PAUSED!";
-
-        SpriteBatch::Draw(_menuBackground, _menuRectangle, nullptr);
-        SpriteBatch::DrawString(menuStream.str().c_str(), _menuStringPosition, Color::Red);
+        SpriteBatch::Draw(_menuTextTexture, _menuLogoDestRect, _menuLogoSourceRect);
+        stringstream help;
+        help << "Press SPACE to start, WASD to change direction, P to pause";
+        SpriteBatch::DrawString(help.str().c_str(), _menuHelpPosition, Color::Green);
     }
     
     SpriteBatch::EndDraw(); // Ends Drawing
