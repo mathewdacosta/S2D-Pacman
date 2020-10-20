@@ -42,6 +42,7 @@ private:
 	bool _spaceKeyDown;
 	bool _paused;
 	bool _pKeyDown;
+	bool _sprintKeyDown;
 
 	Texture2D* _menuTextTexture;
 	Rect* _menuPausedSourceRect;
@@ -52,6 +53,9 @@ private:
 
 	// Data to represent Pacman
 	const float _cPacmanSpeed; // movement speed
+	const float _cPacmanSprintMultiplier; // speed multiplier while sprinting
+	const int _cPacmanSprintDuration; // length of sprint
+	const int _cPacmanSprintCooldown; // length of cooldown between sprints
 	const int _cPacmanFrameTime; // interval between animation frames
 
 	Vector2* _pacmanPosition; // position on screen
@@ -60,6 +64,8 @@ private:
 	int _pacmanAnimCurrentTime; // current time since last update
 	int _pacmanAnimFrame; // current frame in animation
 	MoveDirection _pacmanDirection; // current movement direction
+	int _pacmanSprintTime; // time left on current sprint
+	int _pacmanSprintCooldown; // time left on current sprint
 
 	// Data to represent Munchie
 	const int _cMunchieFrameTime; // interval between animation frames	

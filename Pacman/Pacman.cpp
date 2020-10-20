@@ -2,11 +2,12 @@
 
 #include <sstream>
 
-Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cPacmanSpeed(0.1f), _cPacmanFrameTime(200), _cMunchieFrameTime(450)
+Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cPacmanSpeed(0.1f), _cPacmanSprintMultiplier(2.1f), _cPacmanSprintDuration(2000), _cPacmanSprintCooldown(5000), _cPacmanFrameTime(200), _cMunchieFrameTime(450)
 {
     _started = false;
     _paused = false;
     _pKeyDown = false;
+    _sprintKeyDown = false;
 
     //Initialise important Game aspects
     Graphics::Initialise(argc, argv, this, SCREEN_WIDTH, SCREEN_HEIGHT, false, 25, 25, "Logo here: The Game", 60);
@@ -57,6 +58,8 @@ void Pacman::LoadContent()
     _pacmanAnimCurrentTime = 0;
     _pacmanAnimFrame = 0;
     _pacmanDirection = MoveDirection::Right;
+    _pacmanSprintTime = 0;
+    _pacmanSprintCooldown = 0;
 
     // Load Munchie
     _munchieTexture = new Texture2D();
@@ -115,22 +118,48 @@ void Pacman::Update(int elapsedTime)
     {
         _pacmanDirection = MoveDirection::Up;
     }
+
+    // Sprint
+    if (keyboardState->IsKeyDown(Input::Keys::LEFTSHIFT) && !_sprintKeyDown && _pacmanSprintCooldown <= 0)
+    {
+        _pacmanSprintTime = _cPacmanSprintDuration;
+        _pacmanSprintCooldown = _cPacmanSprintCooldown;
+        _sprintKeyDown = true;
+    }
+
+    if (keyboardState->IsKeyUp(Input::Keys::LEFTSHIFT))
+    {
+        _sprintKeyDown = false;
+    }
     
     /* ====== MOVEMENT ====== */
 
+    // Handle sprint modifier
+    // TODO: turn this into a meter that depletes on hold only + recharges
+    float movementAmount = _cPacmanSpeed * elapsedTime;
+    if (_pacmanSprintTime > 0)
+    {
+        movementAmount *= _cPacmanSprintMultiplier;
+        _pacmanSprintTime -= elapsedTime;
+    }
+    else if (_pacmanSprintCooldown > 0)
+    {
+        _pacmanSprintCooldown -= elapsedTime;
+    }
+    
     switch (_pacmanDirection)
     {
         case MoveDirection::Right:
-            _pacmanPosition->X += _cPacmanSpeed * elapsedTime; // Moves Pacman +x
+            _pacmanPosition->X += movementAmount; // Moves Pacman +x
             break;
         case MoveDirection::Left:
-            _pacmanPosition->X -= _cPacmanSpeed * elapsedTime; // Moves Pacman -x
+            _pacmanPosition->X -= movementAmount; // Moves Pacman -x
             break;
         case MoveDirection::Down:
-            _pacmanPosition->Y += _cPacmanSpeed * elapsedTime; // Moves Pacman +y
+            _pacmanPosition->Y += movementAmount; // Moves Pacman +y
             break;
         case MoveDirection::Up:
-            _pacmanPosition->Y -= _cPacmanSpeed * elapsedTime; // Moves Pacman -y
+            _pacmanPosition->Y -= movementAmount; // Moves Pacman -y
             break;
     }
     
