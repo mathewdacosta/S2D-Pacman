@@ -23,8 +23,11 @@ using namespace S2D;
 // Number of Pacman animation frames
 #define CHARACTER_FRAMES 2
 
+// Number of munchie animation frames
+#define MUNCHIE_FRAMES 2
+
 // Possible movement directions
-enum class MoveDirection { Up, Right, Down, Left };
+enum class MoveDirection { Right = 0, Down, Left, Up };
 
 // Declares the Pacman class which inherits from the Game class.
 // This allows us to overload the Game class methods to help us
@@ -49,18 +52,23 @@ private:
 
 	// Data to represent Pacman
 	const float _cPacmanSpeed; // movement speed
+	const int _cPacmanFrameTime; // interval between animation frames
 
 	Vector2* _pacmanPosition; // position on screen
 	Rect* _pacmanSourceRect; // current location in tilemap
 	Texture2D* _pacmanTexture; // tilemap
+	int _pacmanAnimCurrentTime; // current time since last update
 	int _pacmanAnimFrame; // current frame in animation
 	MoveDirection _pacmanDirection; // current movement direction
 
 	// Data to represent Munchie
-	int _frameCount;
+	const int _cMunchieFrameTime; // interval between animation frames	
+	
 	Rect* _munchieRect;
-	Texture2D* _munchieBlueTexture;
-	Texture2D* _munchieInvertedTexture;
+	Rect* _munchieSourceRect;
+	Texture2D* _munchieTexture;
+	int _munchieAnimCurrentTime; // current time since last update
+	int _munchieAnimFrame; // current frame in animation
 
 	// Position for String
 	Vector2* _stringPosition;

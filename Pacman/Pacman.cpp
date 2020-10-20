@@ -2,9 +2,8 @@
 
 #include <sstream>
 
-Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cPacmanSpeed(0.1f)
+Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cPacmanSpeed(0.1f), _cPacmanFrameTime(200), _cMunchieFrameTime(450)
 {
-    _frameCount = 0;
     _started = false;
     _paused = false;
     _pKeyDown = false;
@@ -19,10 +18,11 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cPacmanSpeed(0.1f)
 
 Pacman::~Pacman()
 {
+    delete _menuBackground;
+    delete _menuTextTexture;
     delete _pacmanTexture;
     delete _pacmanSourceRect;
-    delete _munchieBlueTexture;
-    delete _munchieInvertedTexture;
+    delete _munchieTexture;
     delete _munchieRect;
 }
 
@@ -54,15 +54,17 @@ void Pacman::LoadContent()
     _pacmanTexture->Load("Textures/Pacman.tga", false);
     _pacmanPosition = new Vector2(350.0f, 350.0f);
     _pacmanSourceRect = new Rect(0.0f, 0.0f, 32, 32);
+    _pacmanAnimCurrentTime = 0;
     _pacmanAnimFrame = 0;
     _pacmanDirection = MoveDirection::Right;
 
     // Load Munchie
-    _munchieBlueTexture = new Texture2D();
-    _munchieBlueTexture->Load("Textures/Munchie.tga", true);
-    _munchieInvertedTexture = new Texture2D();
-    _munchieInvertedTexture->Load("Textures/MunchieInverted.tga", true);
-    _munchieRect = new Rect(100.0f, 450.0f, 12, 12);
+    _munchieTexture = new Texture2D();
+    _munchieTexture->Load("Textures/Cherry.png", true);
+    _munchieRect = new Rect(100.0f, 450.0f, 32, 32);
+    _munchieSourceRect = new Rect(0, 0, 32, 32);
+    _munchieAnimCurrentTime = 0;
+    _munchieAnimFrame = 0;
 
     // Set string position
     _stringPosition = new Vector2(10.0f, 25.0f);
@@ -100,51 +102,63 @@ void Pacman::Update(int elapsedTime)
     if (keyboardState->IsKeyDown(Input::Keys::D)) // Checks if D key is pressed
     {
         _pacmanDirection = MoveDirection::Right;
-        _pacmanSourceRect->Y = 0;
     }
-
-    if (keyboardState->IsKeyDown(Input::Keys::A)) // Checks if A key is pressed
+    else if (keyboardState->IsKeyDown(Input::Keys::A)) // Checks if A key is pressed
     {
         _pacmanDirection = MoveDirection::Left;
-        _pacmanSourceRect->Y = 64;
     }
-    
-    if (keyboardState->IsKeyDown(Input::Keys::S)) // Checks if S key is pressed
+    else if (keyboardState->IsKeyDown(Input::Keys::S)) // Checks if S key is pressed
     {
         _pacmanDirection = MoveDirection::Down;
-        _pacmanSourceRect->Y = 32;
     }
-    
-    if (keyboardState->IsKeyDown(Input::Keys::W)) // Checks if W key is pressed
+    else if (keyboardState->IsKeyDown(Input::Keys::W)) // Checks if W key is pressed
     {
         _pacmanDirection = MoveDirection::Up;
-        _pacmanSourceRect->Y = 96;
     }
     
     /* ====== MOVEMENT ====== */
 
-    if (_pacmanDirection == MoveDirection::Right) // Checks if D key is pressed
+    switch (_pacmanDirection)
     {
-        _pacmanPosition->X += _cPacmanSpeed * elapsedTime; // Moves Pacman +x
-    }
-
-    if (_pacmanDirection == MoveDirection::Left) // Checks if A key is pressed
-    {
-        _pacmanPosition->X -= _cPacmanSpeed * elapsedTime; // Moves Pacman -x
-    }
-    
-    if (_pacmanDirection == MoveDirection::Down) // Checks if S key is pressed
-    {
-        _pacmanPosition->Y += _cPacmanSpeed * elapsedTime; // Moves Pacman +y
-    }
-    
-    if (_pacmanDirection == MoveDirection::Up) // Checks if W key is pressed
-    {
-        _pacmanPosition->Y -= _cPacmanSpeed * elapsedTime; // Moves Pacman -y
+        case MoveDirection::Right:
+            _pacmanPosition->X += _cPacmanSpeed * elapsedTime; // Moves Pacman +x
+            break;
+        case MoveDirection::Left:
+            _pacmanPosition->X -= _cPacmanSpeed * elapsedTime; // Moves Pacman -x
+            break;
+        case MoveDirection::Down:
+            _pacmanPosition->Y += _cPacmanSpeed * elapsedTime; // Moves Pacman +y
+            break;
+        case MoveDirection::Up:
+            _pacmanPosition->Y -= _cPacmanSpeed * elapsedTime; // Moves Pacman -y
+            break;
     }
     
     /* ====== WALL COLLISION ====== */
     DoWallWrap();
+
+    /* ====== ANIMATION UPDATES ====== */
+
+    // Increment Pacman animation frame
+    _pacmanAnimCurrentTime += elapsedTime;
+    if (_pacmanAnimCurrentTime > _cPacmanFrameTime)
+    {
+        _pacmanAnimCurrentTime = 0;
+        _pacmanAnimFrame = (_pacmanAnimFrame + 1) % CHARACTER_FRAMES;
+        _pacmanSourceRect->X = _pacmanSourceRect->Width * _pacmanAnimFrame;
+    }
+
+    // Increment munchie animation frame
+    _munchieAnimCurrentTime += elapsedTime;
+    if (_munchieAnimCurrentTime > _cMunchieFrameTime)
+    {
+        _munchieAnimCurrentTime = 0;
+        _munchieAnimFrame = (_munchieAnimFrame + 1) % MUNCHIE_FRAMES;  
+        _munchieSourceRect->X = _munchieSourceRect->Width * _munchieAnimFrame;   
+    }
+
+    // Update Pacman direction
+    _pacmanSourceRect->Y = _pacmanSourceRect->Height * static_cast<int>(_pacmanDirection);
 }
 
 void Pacman::Draw(int elapsedTime)
@@ -158,34 +172,9 @@ void Pacman::Draw(int elapsedTime)
         std::stringstream stream;
         stream << "Pacman X: " << _pacmanPosition->X << " Y: " << _pacmanPosition->Y;
         
-        // Increment animation frame every 12 frames
-        // TODO: stop sharing this with munchie
-        if (_frameCount % 12 == 0)
-        {
-            _pacmanAnimFrame = (_pacmanAnimFrame + 1) % CHARACTER_FRAMES;
-            _pacmanSourceRect->X = _pacmanAnimFrame * 32;        
-        }
         SpriteBatch::Draw(_pacmanTexture, _pacmanPosition, _pacmanSourceRect); // Draws Pacman
-
-        if (_frameCount < 30)
-        {
-            // Draws Red Munchie
-            SpriteBatch::Draw(_munchieInvertedTexture, _munchieRect, nullptr, Vector2::Zero, 1.0f, 0.0f, Color::White,
-                              SpriteEffect::NONE);
-
-            _frameCount++;
-        }
-        else
-        {
-            // Draw Blue Munchie
-            SpriteBatch::Draw(_munchieBlueTexture, _munchieRect, nullptr, Vector2::Zero, 1.0f, 0.0f, Color::White,
-                              SpriteEffect::NONE);
-
-            _frameCount++;
-
-            if (_frameCount >= 60)
-                _frameCount = 0;
-        }
+        SpriteBatch::Draw(_munchieTexture, _munchieRect, _munchieSourceRect, Vector2::Zero, 1.0f, 0.0f, Color::White,
+                              SpriteEffect::NONE); // Draws munchie
 
         // Draws String
         SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
