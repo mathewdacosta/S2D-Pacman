@@ -208,6 +208,9 @@ void Pacman::Draw(int elapsedTime)
         // Draws String
         SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
 
+        SpriteBatch::DrawRectangle(12, 760, _pacmanSprintTime / 2, 4, Color::Blue);
+        SpriteBatch::DrawRectangle(12, 764, _pacmanSprintCooldown / 5, 4, Color::Cyan);
+
         // Draw pause menu
         if (_paused)
         {
