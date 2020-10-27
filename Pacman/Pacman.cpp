@@ -58,7 +58,7 @@ void Pacman::LoadContent()
 
     // Load Pacman
     _pacmanTexture = new Texture2D();
-    _pacmanTexture->Load("Textures/Pacman.tga", false);
+    _pacmanTexture->Load("Textures/Pacman.png", false);
     _pacmanPosition = new Vector2(350.0f, 350.0f);
     _pacmanSourceRect = new Rect(0.0f, 0.0f, 32, 32);
     _pacmanAnimCurrentTime = 0;
