@@ -21,12 +21,12 @@ using namespace S2D;
 #define SCREEN_HEIGHT 768
 
 // Number of Pacman animation frames
-#define CHARACTER_FRAMES 2
+#define CHARACTER_FRAMES 8
 
 // Number of munchie animation frames
 #define MUNCHIE_FRAMES 2
 
-// Possible movement directions
+/// <summary> Possible movement directions - the ordinals match the position of the Pacman sprites on the spritesheet </summary>
 enum class MoveDirection { Right = 0, Down, Left, Up };
 
 // Declares the Pacman class which inherits from the Game class.
@@ -79,7 +79,23 @@ private:
 	// Position for String
 	Vector2* _stringPosition;
 
-	void virtual DoWallWrap();
+	/// <summary> Perform movement inputs </summary>
+	void Input(Input::KeyboardState* keyboardState);
+
+	/// <summary> Check the pause menu input </summary>
+	void CheckPaused(Input::KeyboardState* keyboardState, Input::Keys pauseKey);
+	
+	/// <summary> Checks whether Pacman has collided with the wall. </summary>
+	void CheckViewportCollision();
+
+	/// <summary> Update position of Pacman </summary>
+	void UpdatePacmanMovement(int elapsedTime);
+	
+	/// <summary> Update animation of Pacman </summary>
+	void UpdatePacmanFrame(int elapsedTime);
+	
+	/// <summary> Update animation of munchies </summary>
+	void UpdateMunchieFrame(int elapsedTime);
 
 public:
 	/// <summary> Constructs the Pacman class. </summary>

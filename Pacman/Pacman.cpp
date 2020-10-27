@@ -2,7 +2,13 @@
 
 #include <sstream>
 
-Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cPacmanSpeed(0.1f), _cPacmanSprintMultiplier(2.1f), _cPacmanSprintDuration(2000), _cPacmanSprintCooldown(5000), _cPacmanFrameTime(200), _cMunchieFrameTime(450)
+Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv),
+                                         _cPacmanSpeed(0.1f),
+                                         _cPacmanSprintMultiplier(2.1f),
+                                         _cPacmanSprintDuration(2000),
+                                         _cPacmanSprintCooldown(5000),
+                                         _cPacmanFrameTime(35),
+                                         _cMunchieFrameTime(450)
 {
     _started = false;
     _paused = false;
@@ -49,7 +55,7 @@ void Pacman::LoadContent()
         _menuLogoSourceRect->Width,
         _menuLogoSourceRect->Height);
     _menuHelpPosition = new Vector2(10, 740);
-    
+
     // Load Pacman
     _pacmanTexture = new Texture2D();
     _pacmanTexture->Load("Textures/Pacman.tga", false);
@@ -78,121 +84,32 @@ void Pacman::Update(int elapsedTime)
     // Gets the current state of the keyboard
     Input::KeyboardState* keyboardState = Input::Keyboard::GetState();
 
-    /* ====== START ====== */
+    // Check for start input
     if (!_started && keyboardState->IsKeyDown(Input::Keys::SPACE))
-    {
         _started = true;
-    }
 
     if (!_started) return;
 
-    /* ====== PAUSE ====== */
-    if (keyboardState->IsKeyDown(Input::Keys::P) && !_pKeyDown)
-    {
-        _paused = !_paused;
-        _pKeyDown = true;
-    }
+    // Check for pause input/toggle
+    CheckPaused(keyboardState, Input::Keys::P);
+    if (_paused) return;
 
-    if (keyboardState->IsKeyUp(Input::Keys::P))
-    {
-        _pKeyDown = false;
-    }
+    // Handle gameplay inputs
+    Input(keyboardState);
 
-    if (_paused) return; 
-    
-    /* ====== INPUT ====== */
+    // Update movement according to input
+    UpdatePacmanMovement(elapsedTime);
 
-    if (keyboardState->IsKeyDown(Input::Keys::D)) // Checks if D key is pressed
-    {
-        _pacmanDirection = MoveDirection::Right;
-    }
-    else if (keyboardState->IsKeyDown(Input::Keys::A)) // Checks if A key is pressed
-    {
-        _pacmanDirection = MoveDirection::Left;
-    }
-    else if (keyboardState->IsKeyDown(Input::Keys::S)) // Checks if S key is pressed
-    {
-        _pacmanDirection = MoveDirection::Down;
-    }
-    else if (keyboardState->IsKeyDown(Input::Keys::W)) // Checks if W key is pressed
-    {
-        _pacmanDirection = MoveDirection::Up;
-    }
+    // Check viewport boundaries and 
+    CheckViewportCollision();
 
-    // Sprint
-    if (keyboardState->IsKeyDown(Input::Keys::LEFTSHIFT) && !_sprintKeyDown && _pacmanSprintCooldown <= 0)
-    {
-        _pacmanSprintTime = _cPacmanSprintDuration;
-        _pacmanSprintCooldown = _cPacmanSprintCooldown;
-        _sprintKeyDown = true;
-    }
-
-    if (keyboardState->IsKeyUp(Input::Keys::LEFTSHIFT))
-    {
-        _sprintKeyDown = false;
-    }
-    
-    /* ====== MOVEMENT ====== */
-
-    // Handle sprint modifier
-    // TODO: turn this into a meter that depletes on hold only + recharges
-    float movementAmount = _cPacmanSpeed * elapsedTime;
-    if (_pacmanSprintTime > 0)
-    {
-        movementAmount *= _cPacmanSprintMultiplier;
-        _pacmanSprintTime -= elapsedTime;
-    }
-    else if (_pacmanSprintCooldown > 0)
-    {
-        _pacmanSprintCooldown -= elapsedTime;
-    }
-    
-    switch (_pacmanDirection)
-    {
-        case MoveDirection::Right:
-            _pacmanPosition->X += movementAmount; // Moves Pacman +x
-            break;
-        case MoveDirection::Left:
-            _pacmanPosition->X -= movementAmount; // Moves Pacman -x
-            break;
-        case MoveDirection::Down:
-            _pacmanPosition->Y += movementAmount; // Moves Pacman +y
-            break;
-        case MoveDirection::Up:
-            _pacmanPosition->Y -= movementAmount; // Moves Pacman -y
-            break;
-    }
-    
-    /* ====== WALL COLLISION ====== */
-    DoWallWrap();
-
-    /* ====== ANIMATION UPDATES ====== */
-
-    // Increment Pacman animation frame
-    _pacmanAnimCurrentTime += elapsedTime;
-    if (_pacmanAnimCurrentTime > _cPacmanFrameTime)
-    {
-        _pacmanAnimCurrentTime = 0;
-        _pacmanAnimFrame = (_pacmanAnimFrame + 1) % CHARACTER_FRAMES;
-        _pacmanSourceRect->X = _pacmanSourceRect->Width * _pacmanAnimFrame;
-    }
-
-    // Increment munchie animation frame
-    _munchieAnimCurrentTime += elapsedTime;
-    if (_munchieAnimCurrentTime > _cMunchieFrameTime)
-    {
-        _munchieAnimCurrentTime = 0;
-        _munchieAnimFrame = (_munchieAnimFrame + 1) % MUNCHIE_FRAMES;  
-        _munchieSourceRect->X = _munchieSourceRect->Width * _munchieAnimFrame;   
-    }
-
-    // Update Pacman direction
-    _pacmanSourceRect->Y = _pacmanSourceRect->Height * static_cast<int>(_pacmanDirection);
+    // Update animation frames
+    UpdatePacmanFrame(elapsedTime);
+    UpdateMunchieFrame(elapsedTime);
 }
 
 void Pacman::Draw(int elapsedTime)
 {
-
     SpriteBatch::BeginDraw(); // Starts Drawing
 
     if (_started)
@@ -200,10 +117,10 @@ void Pacman::Draw(int elapsedTime)
         // Allows us to easily create a string
         std::stringstream stream;
         stream << "Pacman X: " << _pacmanPosition->X << " Y: " << _pacmanPosition->Y;
-        
+
         SpriteBatch::Draw(_pacmanTexture, _pacmanPosition, _pacmanSourceRect); // Draws Pacman
         SpriteBatch::Draw(_munchieTexture, _munchieRect, _munchieSourceRect, Vector2::Zero, 1.0f, 0.0f, Color::White,
-                              SpriteEffect::NONE); // Draws munchie
+                          SpriteEffect::NONE); // Draws munchie
 
         // Draws String
         SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
@@ -225,32 +142,154 @@ void Pacman::Draw(int elapsedTime)
         help << "Press SPACE to start, WASD to change direction, P to pause";
         SpriteBatch::DrawString(help.str().c_str(), _menuHelpPosition, Color::Green);
     }
-    
+
     SpriteBatch::EndDraw(); // Ends Drawing
 }
 
-void Pacman::DoWallWrap()
+void Pacman::Input(Input::KeyboardState* keyboardState)
 {
-	float centreX = _pacmanPosition->X + (_pacmanSourceRect->Width / 2);
-	float centreY = _pacmanPosition->Y + (_pacmanSourceRect->Height / 2);
-	
-	if (centreX > Graphics::GetViewportWidth()) // if centre X coord > screen width
-	{
-		_pacmanPosition->X -= Graphics::GetViewportWidth();
-	}
+    // Check WASD for directional inputs
+    if (keyboardState->IsKeyDown(Input::Keys::D))
+    {
+        _pacmanDirection = MoveDirection::Right;
+    }
+    else if (keyboardState->IsKeyDown(Input::Keys::A))
+    {
+        _pacmanDirection = MoveDirection::Left;
+    }
+    else if (keyboardState->IsKeyDown(Input::Keys::S))
+    {
+        _pacmanDirection = MoveDirection::Down;
+    }
+    else if (keyboardState->IsKeyDown(Input::Keys::W))
+    {
+        _pacmanDirection = MoveDirection::Up;
+    }
 
-	if (centreX < 0) // if centre X coord < 0
-	{
-		_pacmanPosition->X += Graphics::GetViewportWidth();
-	}
-	
-    if (centreY > Graphics::GetViewportHeight()) // if centre Y coord > screen height
-	{
+    // Sprint
+    if (keyboardState->IsKeyDown(Input::Keys::LEFTSHIFT) && !_sprintKeyDown && _pacmanSprintCooldown <= 0)
+    {
+        _pacmanSprintTime = _cPacmanSprintDuration;
+        _pacmanSprintCooldown = _cPacmanSprintCooldown;
+        _sprintKeyDown = true;
+    }
+
+    if (keyboardState->IsKeyUp(Input::Keys::LEFTSHIFT))
+    {
+        _sprintKeyDown = false;
+    }
+}
+
+void Pacman::CheckPaused(Input::KeyboardState* keyboardState, Input::Keys pauseKey)
+{
+    if (keyboardState->IsKeyDown(pauseKey) && !_pKeyDown)
+    {
+        _paused = !_paused;
+        _pKeyDown = true; // debounce P key
+    }
+
+    if (keyboardState->IsKeyUp(pauseKey))
+    {
+        _pKeyDown = false;
+    }
+}
+
+
+void Pacman::CheckViewportCollision()
+{
+    float centreX = _pacmanPosition->X + (_pacmanSourceRect->Width / 2);
+    float centreY = _pacmanPosition->Y + (_pacmanSourceRect->Height / 2);
+
+    // Check if Pacman centre is off to RIGHT of screen
+    if (centreX > Graphics::GetViewportWidth())
+    {
+        _pacmanPosition->X -= Graphics::GetViewportWidth();
+    }
+
+    // Check if Pacman centre is off to LEFT of screen
+    if (centreX < 0) // if centre X coord < 0
+    {
+        _pacmanPosition->X += Graphics::GetViewportWidth();
+    }
+
+    // Check if Pacman centre is off BOTTOM of screen
+    if (centreY > Graphics::GetViewportHeight())
+    {
         _pacmanPosition->Y -= Graphics::GetViewportHeight();
-	}
+    }
 
-	if (centreY < 0) // if centre Y coord < 0
-	{
-		_pacmanPosition->Y += Graphics::GetViewportHeight();
-	}
+    // Check if Pacman centre is off TOP of screen
+    if (centreY < 0)
+    {
+        _pacmanPosition->Y += Graphics::GetViewportHeight();
+    }
+}
+
+void Pacman::UpdatePacmanMovement(int elapsedTime)
+{
+    float movementAmount = _cPacmanSpeed * elapsedTime;
+    
+    // Handle sprint modifier
+    // TODO: turn this into a meter that depletes on hold only + recharges
+    if (_pacmanSprintTime > 0)
+    {
+        movementAmount *= _cPacmanSprintMultiplier;
+        _pacmanSprintTime -= elapsedTime;
+    }
+    else
+    {
+        _pacmanSprintTime = 0;
+        if (_pacmanSprintCooldown > 0)
+        {
+            _pacmanSprintCooldown -= elapsedTime;
+        }
+        else
+        {
+            _pacmanSprintCooldown = 0;
+        }
+    }
+
+    // Move in current facing direction by current move amount
+    switch (_pacmanDirection)
+    {
+    case MoveDirection::Right:
+        _pacmanPosition->X += movementAmount; // Moves Pacman +x
+        break;
+    case MoveDirection::Left:
+        _pacmanPosition->X -= movementAmount; // Moves Pacman -x
+        break;
+    case MoveDirection::Down:
+        _pacmanPosition->Y += movementAmount; // Moves Pacman +y
+        break;
+    case MoveDirection::Up:
+        _pacmanPosition->Y -= movementAmount; // Moves Pacman -y
+        break;
+    }
+}
+
+void Pacman::UpdatePacmanFrame(int elapsedTime)
+{
+    // Increment Pacman animation frame
+    _pacmanAnimCurrentTime += elapsedTime;
+    if (_pacmanAnimCurrentTime > _cPacmanFrameTime)
+    {
+        _pacmanAnimCurrentTime = 0;
+        _pacmanAnimFrame = (_pacmanAnimFrame + 1) % CHARACTER_FRAMES;
+        _pacmanSourceRect->X = _pacmanSourceRect->Width * _pacmanAnimFrame;
+    }
+
+    // Update Pacman direction
+    _pacmanSourceRect->Y = _pacmanSourceRect->Height * static_cast<int>(_pacmanDirection);
+}
+
+void Pacman::UpdateMunchieFrame(int elapsedTime)
+{
+    // Increment munchie animation frame
+    _munchieAnimCurrentTime += elapsedTime;
+    if (_munchieAnimCurrentTime > _cMunchieFrameTime)
+    {
+        _munchieAnimCurrentTime = 0;
+        _munchieAnimFrame = (_munchieAnimFrame + 1) % MUNCHIE_FRAMES;
+        _munchieSourceRect->X = _munchieSourceRect->Width * _munchieAnimFrame;
+    }
 }
