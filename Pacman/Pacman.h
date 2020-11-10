@@ -44,6 +44,9 @@ private:
 
 	// Data to represent Munchie
 	Food* _munchies[MUNCHIE_COUNT];
+
+	// Current number of collisions (TODO remove when actual handling)
+	int _collisionCount;
 	
 	// Position for debug string
 	Vector2* _stringPosition;
@@ -53,6 +56,18 @@ private:
 
 	/// <summary> Check the pause menu input </summary>
 	void CheckPaused(Input::KeyboardState* keyboardState, Input::Keys pauseKey);
+	
+	/// <summary> Check whether two Rects overlap </summary>
+	bool CheckBoxCollision(Rect* rect1, Rect* rect2);
+	
+	/// <summary> Check whether a Rect overlaps with another rectangle of the given coordinates </summary>
+	bool CheckBoxCollision(Rect* rect1, float left2, float right2, float top2, float bottom2);
+
+	/// <summary> Check whether two rectangles overlap, given the X and Y coordinates of their sides </summary>
+	bool CheckBoxCollision(float left1, float right1, float top1, float bottom1, float left2, float right2, float top2, float bottom2);
+
+	/// <summary> Check and handle collisions between pacman and munchies </summary>
+	void CheckMunchieCollisions();
 	
 	/// <summary> Checks whether Pacman has collided with the wall. </summary>
 	void CheckViewportCollision();

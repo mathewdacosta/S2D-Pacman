@@ -133,8 +133,11 @@ void Pacman::Update(int elapsedTime)
     // Update movement according to input
     UpdatePacmanMovement(elapsedTime);
 
-    // Check viewport boundaries and 
+    // Check viewport boundaries
     CheckViewportCollision();
+
+    // Check collisions with munchies
+    CheckMunchieCollisions();
 
     // Update animation frames
     UpdatePacmanFrame(elapsedTime);
@@ -152,7 +155,7 @@ void Pacman::Draw(int elapsedTime)
     {
         // Allows us to easily create a string
         std::stringstream stream;
-        stream << "Pacman X: " << _player->position->X << " Y: " << _player->position->Y;
+        stream << "Collisions: " << _collisionCount << "\nX: " << _player->position->X << "\nY: " << _player->position->Y;
 
         // Draw player
         SpriteBatch::Draw(_player->texture, _player->position, _player->sourceRect);
@@ -236,6 +239,43 @@ void Pacman::CheckPaused(Input::KeyboardState* keyboardState, Input::Keys pauseK
     }
 }
 
+
+bool Pacman::CheckBoxCollision(Rect* rect1, Rect* rect2)
+{
+    return CheckBoxCollision(
+        rect1->X, rect1->X + rect1->Width, rect1->Y, rect1->Y + rect1->Height,
+        rect2->X, rect2->X + rect2->Width, rect2->Y, rect2->Y + rect2->Height);
+}
+
+
+bool Pacman::CheckBoxCollision(Rect* rect1, float left2, float right2, float top2, float bottom2)
+{
+    return CheckBoxCollision(
+        rect1->X, rect1->X + rect1->Width, rect1->Y, rect1->Y + rect1->Height,
+        left2, right2, top2, bottom2);
+}
+
+bool Pacman::CheckBoxCollision(float left1, float right1, float top1, float bottom1, float left2, float right2, float top2, float bottom2)
+{
+    if (left1 > right2 || right1 < left2 || top1 > bottom2 || bottom1 < top2)
+        return false;
+
+    return true;
+}
+
+
+void Pacman::CheckMunchieCollisions()
+{
+    Vector2* playerPosition = _player->position;
+    _collisionCount = 0;
+    for (int i = 0; i < MUNCHIE_COUNT; ++i)
+    {
+        if (CheckBoxCollision(_munchies[i]->destRect, playerPosition->X, playerPosition->X + _player->sourceRect->Width, playerPosition->Y, playerPosition->Y + _player->sourceRect->Height))
+        {
+            _collisionCount++;
+        }
+    }
+}
 
 void Pacman::CheckViewportCollision()
 {
