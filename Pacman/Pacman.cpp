@@ -24,7 +24,9 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
         .sprintTime = 0,
         .sprintCooldown = 0
     };
+    
     _sprintKeyDown = false;
+    _selectedMunchie = nullptr;
 
     for (int i = 0; i < MUNCHIE_COUNT; i++)
     {
@@ -105,8 +107,11 @@ void Pacman::LoadContent()
         _munchies[i]->animFrame = rand() % 1;
         _munchies[i]->animFrameTime = (rand() % 170) + 300;
         _munchies[i]->sourceRect = new Rect(0, 0, 32, 32);
-        _munchies[i]->destRect = new Rect(rand() % (SCREEN_WIDTH - 32), rand() % (SCREEN_HEIGHT - 32), 32, 32);
+        // _munchies[i]->destRect = new Rect(rand() % (SCREEN_WIDTH - 32), rand() % (SCREEN_HEIGHT - 32), 32, 32);
+        _munchies[i]->destRect = new Rect(0, 0, 32, 32);
     }
+
+    RandomiseMunchiePositions();
 
     // Set string position
     _stringPosition = new Vector2(10.0f, 25.0f);
@@ -114,8 +119,9 @@ void Pacman::LoadContent()
 
 void Pacman::Update(int elapsedTime)
 {
-    // Gets the current state of the keyboard
+    // Gets the current state of the keyboard and mouse
     Input::KeyboardState* keyboardState = Input::Keyboard::GetState();
+    Input::MouseState* mouseState = Input::Mouse::GetState();
 
     // Check for start input
     if (!_menu->started && keyboardState->IsKeyDown(Input::Keys::SPACE))
@@ -128,7 +134,7 @@ void Pacman::Update(int elapsedTime)
     if (_menu->paused) return;
 
     // Handle gameplay inputs
-    Input(keyboardState);
+    Input(keyboardState, mouseState);
 
     // Update movement according to input
     UpdatePacmanMovement(elapsedTime);
@@ -191,7 +197,7 @@ void Pacman::Draw(int elapsedTime)
     SpriteBatch::EndDraw(); // Ends Drawing
 }
 
-void Pacman::Input(Input::KeyboardState* keyboardState)
+void Pacman::Input(Input::KeyboardState* keyboardState, Input::MouseState* mouseState)
 {
     // Check WASD for directional inputs
     if (keyboardState->IsKeyDown(Input::Keys::D))
@@ -209,6 +215,44 @@ void Pacman::Input(Input::KeyboardState* keyboardState)
     else if (keyboardState->IsKeyDown(Input::Keys::W))
     {
         _player->direction = MoveDirection::Up;
+    }
+
+    // Cherry randomising
+    if (keyboardState->IsKeyDown(Input::Keys::R))
+    {
+        RandomiseMunchiePositions();
+    }
+
+    // Cherry movement
+    if (mouseState->LeftButton == Input::ButtonState::PRESSED)
+    {
+        int mouseX = mouseState->X;
+        int mouseY = mouseState->Y;
+        
+        if (_selectedMunchie == nullptr)
+        {
+            for (int i = 0; i < MUNCHIE_COUNT; ++i)
+            {
+                Food* food = _munchies[i];
+                if (CheckBoxCollision(food->destRect, mouseX, mouseX, mouseY, mouseY))
+                {
+                    _selectedMunchie = food;
+                    _selectionOffsetX = _selectedMunchie->destRect->X - mouseX;
+                    _selectionOffsetY = _selectedMunchie->destRect->Y - mouseY;
+                    break;
+                }
+            }
+        }
+
+        if (_selectedMunchie != nullptr)
+        {
+            _selectedMunchie->destRect->X = mouseX + _selectionOffsetX;
+            _selectedMunchie->destRect->Y = mouseY + _selectionOffsetY;
+        }
+    }
+    else
+    {
+        _selectedMunchie = nullptr;
     }
 
     // Sprint
@@ -304,6 +348,16 @@ void Pacman::CheckViewportCollision()
     if (centreY < 0)
     {
         _player->position->Y += Graphics::GetViewportHeight();
+    }
+}
+
+
+void Pacman::RandomiseMunchiePositions()
+{
+    for (int i = 0; i < MUNCHIE_COUNT; ++i)
+    {
+        _munchies[i]->destRect->X = rand() % (SCREEN_WIDTH - 32);
+        _munchies[i]->destRect->Y = rand() % (SCREEN_HEIGHT - 32);
     }
 }
 

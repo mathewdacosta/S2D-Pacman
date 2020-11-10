@@ -47,12 +47,17 @@ private:
 
 	// Current number of collisions (TODO remove when actual handling)
 	int _collisionCount;
+
+	// Munchie currently selected by click-and-drag + offset of first selection
+	Food* _selectedMunchie;
+	int _selectionOffsetX;
+	int _selectionOffsetY;
 	
 	// Position for debug string
 	Vector2* _stringPosition;
 
 	/// <summary> Perform movement inputs </summary>
-	void Input(Input::KeyboardState* keyboardState);
+	void Input(Input::KeyboardState* keyboardState, Input::MouseState* mouseState);
 
 	/// <summary> Check the pause menu input </summary>
 	void CheckPaused(Input::KeyboardState* keyboardState, Input::Keys pauseKey);
@@ -71,6 +76,9 @@ private:
 	
 	/// <summary> Checks whether Pacman has collided with the wall. </summary>
 	void CheckViewportCollision();
+
+	/// <summary> Change the position of all munchies to new random locations </summary>
+	void RandomiseMunchiePositions();
 
 	/// <summary> Update position of Pacman </summary>
 	void UpdatePacmanMovement(int elapsedTime);
