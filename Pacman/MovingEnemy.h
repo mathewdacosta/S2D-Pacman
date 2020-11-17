@@ -9,5 +9,4 @@ struct MovingEnemy
     Texture2D* texture; // tilemap
     MoveDirection direction; // current movement direction
     int animCurrentTime; // current time since last update
-    int animFrame; // current frame in animation
 };

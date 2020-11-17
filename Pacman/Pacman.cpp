@@ -142,14 +142,12 @@ void Pacman::LoadContent()
     // Load enemy
     Texture2D* ghostTexture = new Texture2D();
     ghostTexture->Load("Textures/GhostBlue.png", false);
-    for (int i = 0; i < MUNCHIE_COUNT; i++)
+    for (int i = 0; i < GHOST_COUNT; i++)
     {
-        _munchies[i]->texture = munchieTexture;
-        _munchies[i]->animCurrentTime = 0;
-        _munchies[i]->animFrame = rand() % 1;
-        _munchies[i]->animFrameTime = (rand() % 170) + 300;
-        _munchies[i]->sourceRect = new Rect(0, 0, 20, 20);
-        _munchies[i]->destRect = new Rect(rand() % (SCREEN_WIDTH - 20), rand() % (SCREEN_HEIGHT - 20), 20, 20);
+        _ghosts[i]->texture = ghostTexture;
+        _ghosts[i]->animCurrentTime = 0;
+        _ghosts[i]->sourceRect = new Rect(0, 0, 20, 20);
+        _ghosts[i]->position = new Vector2(rand() % (SCREEN_WIDTH - 20), rand() % (SCREEN_HEIGHT - 20));
     }
 
     // Set string position
@@ -202,6 +200,8 @@ void Pacman::Update(int elapsedTime)
         UpdateMunchieFrame(_munchies[i], elapsedTime);
         UpdateMunchieFrame(_walls[i], elapsedTime);
     }
+
+    // TODO: update ghost position, do AI and collisions
 }
 
 void Pacman::Draw(int elapsedTime)
@@ -228,6 +228,8 @@ void Pacman::Draw(int elapsedTime)
             SpriteBatch::Draw(_walls[i]->texture, _walls[i]->destRect, _walls[i]->sourceRect, Vector2::Zero, 1.0f, 0.0f, Color::White,
                           SpriteEffect::NONE);
         }
+
+        // TODO: draw ghosts
 
         // Draws String
         SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
