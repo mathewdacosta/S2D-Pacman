@@ -17,7 +17,7 @@ struct Player
     const int _cSprintCooldown; // length of cooldown between sprints
     const int _cFrameTime; // interval between animation frames
 
-    Vector2* position; // position on screen
+    Vector2* position; // position on screenw
     Rect* sourceRect; // current location in tilemap
     Texture2D* texture; // tilemap
     MoveDirection direction; // current movement direction
@@ -26,4 +26,6 @@ struct Player
     
     int sprintTime; // time left on current sprint
     int sprintCooldown; // time left on current sprint
+
+    bool dead; // whether or not pacman is dead
 };

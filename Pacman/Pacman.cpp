@@ -1,11 +1,15 @@
 #include "Pacman.h"
 #include "Player.h"
+#include "Food.h"
+#include "MovingEnemy.h"
 
 #include <sstream>
 #include <time.h>
 
 Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 {
+    srand(time(nullptr));
+
     _menu = new MenuState {
         .started = false,
         .spaceKeyDown = false,
@@ -22,13 +26,20 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
         .animCurrentTime = 0,
         .animFrame = 0,
         .sprintTime = 0,
-        .sprintCooldown = 0
+        .sprintCooldown = 0,
+        .dead = false
     };
     _sprintKeyDown = false;
 
     for (int i = 0; i < MUNCHIE_COUNT; i++)
     {
         _munchies[i] = new Food();
+        _walls[i] = new Food();
+    }
+
+    for (int i = 0; i < GHOST_COUNT; i++)
+    {
+        _ghosts[i] = new MovingEnemy();
     }
 
     //Initialise important Game aspects
@@ -59,11 +70,24 @@ Pacman::~Pacman()
     delete _munchies[0]->texture;
     for (int i = 0; i < MUNCHIE_COUNT; i++)
     {
-        delete _munchies[0]->sourceRect;
-        delete _munchies[0]->destRect;
-        delete _munchies[0];
+        delete _munchies[i]->sourceRect;
+        delete _munchies[i]->destRect;
+        delete _munchies[i];
+        delete _walls[i]->sourceRect;
+        delete _walls[i]->destRect;
+        delete _walls[i];
     }
     delete[] _munchies;
+    delete[] _walls;
+
+    delete _ghosts[0]->texture;
+    for (int i = 0; i < MUNCHIE_COUNT; i++)
+    {
+        delete _ghosts[i]->sourceRect;
+        delete _ghosts[i]->position;
+        delete _ghosts[i];
+    }
+    delete[] _ghosts;
 }
 
 void Pacman::LoadContent()
@@ -87,7 +111,7 @@ void Pacman::LoadContent()
         (Graphics::GetViewportHeight() / 3.0f) - (_menu->logoSourceRect->Height / 2.0f),
         _menu->logoSourceRect->Width,
         _menu->logoSourceRect->Height);
-    _menu->helpPosition = new Vector2(10, 740);
+    _menu->helpPosition = new Vector2(10, Graphics::GetViewportHeight() - 28);
 
     // Load Pacman
     _player->texture = new Texture2D();
@@ -97,15 +121,35 @@ void Pacman::LoadContent()
 
     // Load Munchie
     Texture2D* munchieTexture = new Texture2D();
-    munchieTexture->Load("Textures/Cherry.png", true);
+    munchieTexture->Load("Textures/Cherry.png", false);
     for (int i = 0; i < MUNCHIE_COUNT; i++)
     {
         _munchies[i]->texture = munchieTexture;
         _munchies[i]->animCurrentTime = 0;
         _munchies[i]->animFrame = rand() % 1;
         _munchies[i]->animFrameTime = (rand() % 170) + 300;
-        _munchies[i]->sourceRect = new Rect(0, 0, 32, 32);
-        _munchies[i]->destRect = new Rect(rand() % (SCREEN_WIDTH - 32), rand() % (SCREEN_HEIGHT - 32), 32, 32);
+        _munchies[i]->sourceRect = new Rect(0, 0, 21, 30);
+        _munchies[i]->destRect = new Rect(rand() % (SCREEN_WIDTH - 21), rand() % (SCREEN_HEIGHT - 30), 21, 30);
+        
+        _walls[i]->texture = munchieTexture;
+        _walls[i]->animCurrentTime = 0;
+        _walls[i]->animFrame = rand() % 1;
+        _walls[i]->animFrameTime = 0;
+        _walls[i]->sourceRect = new Rect(0, 0, 21, 30);
+        _walls[i]->destRect = new Rect(rand() % (SCREEN_WIDTH - 21), rand() % (SCREEN_HEIGHT - 30), 21, 30);
+    }
+
+    // Load enemy
+    Texture2D* ghostTexture = new Texture2D();
+    ghostTexture->Load("Textures/GhostBlue.png", false);
+    for (int i = 0; i < MUNCHIE_COUNT; i++)
+    {
+        _munchies[i]->texture = munchieTexture;
+        _munchies[i]->animCurrentTime = 0;
+        _munchies[i]->animFrame = rand() % 1;
+        _munchies[i]->animFrameTime = (rand() % 170) + 300;
+        _munchies[i]->sourceRect = new Rect(0, 0, 20, 20);
+        _munchies[i]->destRect = new Rect(rand() % (SCREEN_WIDTH - 20), rand() % (SCREEN_HEIGHT - 20), 20, 20);
     }
 
     // Set string position
@@ -130,8 +174,20 @@ void Pacman::Update(int elapsedTime)
     // Handle gameplay inputs
     Input(keyboardState);
 
+    // Store last position in case of collision
+    Vector2 lastPosition = Vector2 {
+        _player->position->X,
+        _player->position->Y
+    };
+
     // Update movement according to input
     UpdatePacmanMovement(elapsedTime);
+
+    if (CheckWallCollisions())
+    {
+        _player->position->X = lastPosition.X;
+        _player->position->Y = lastPosition.Y;
+    }
 
     // Check viewport boundaries
     CheckViewportCollision();
@@ -144,6 +200,7 @@ void Pacman::Update(int elapsedTime)
     for (int i = 0; i < MUNCHIE_COUNT; i++)
     {
         UpdateMunchieFrame(_munchies[i], elapsedTime);
+        UpdateMunchieFrame(_walls[i], elapsedTime);
     }
 }
 
@@ -157,13 +214,18 @@ void Pacman::Draw(int elapsedTime)
         std::stringstream stream;
         stream << "Collisions: " << _collisionCount << "\nX: " << _player->position->X << "\nY: " << _player->position->Y;
 
-        // Draw player
-        SpriteBatch::Draw(_player->texture, _player->position, _player->sourceRect);
+        // Draw player if not dead
+        if (!_player->dead)
+        {
+            SpriteBatch::Draw(_player->texture, _player->position, _player->sourceRect);
+        }
 
         // Draw munchies
         for (int i = 0; i < MUNCHIE_COUNT; i++)
         {
             SpriteBatch::Draw(_munchies[i]->texture, _munchies[i]->destRect, _munchies[i]->sourceRect, Vector2::Zero, 1.0f, 0.0f, Color::White,
+                          SpriteEffect::NONE);
+            SpriteBatch::Draw(_walls[i]->texture, _walls[i]->destRect, _walls[i]->sourceRect, Vector2::Zero, 1.0f, 0.0f, Color::White,
                           SpriteEffect::NONE);
         }
 
@@ -276,6 +338,22 @@ void Pacman::CheckMunchieCollisions()
         }
     }
 }
+
+bool Pacman::CheckWallCollisions()
+{
+    Vector2* playerPosition = _player->position;
+
+    for (int i = 0; i < MUNCHIE_COUNT; ++i)
+    {
+        if (CheckBoxCollision(_walls[i]->destRect, playerPosition->X, playerPosition->X + _player->sourceRect->Width, playerPosition->Y, playerPosition->Y + _player->sourceRect->Height))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 
 void Pacman::CheckViewportCollision()
 {

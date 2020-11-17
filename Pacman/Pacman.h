@@ -15,19 +15,23 @@ using namespace S2D;
 
 // Include our types
 #include "MenuState.h"
-#include "Player.h";
+#include "Player.h"
 #include "Food.h"
+#include "MovingEnemy.h"
 
 // Screen width and height
-#define SCREEN_WIDTH 1024
-#define SCREEN_HEIGHT 768
+#define SCREEN_WIDTH 512
+#define SCREEN_HEIGHT 658
 
 // Number of animation frames for player and munchie
 #define PLAYER_FRAMES 8
 #define MUNCHIE_FRAMES 2
 
 // Number of munchies to spawn
-#define MUNCHIE_COUNT 50
+#define MUNCHIE_COUNT 10
+
+// Number of ghosts to spawn
+#define GHOST_COUNT 5
 
 // Declares the Pacman class which inherits from the Game class.
 // This allows us to overload the Game class methods to help us
@@ -42,8 +46,10 @@ private:
 	Player* _player;
 	bool _sprintKeyDown;
 
-	// Data to represent Munchie
+	// Data to represent munchies, walls and ghosts
 	Food* _munchies[MUNCHIE_COUNT];
+	Food* _walls[MUNCHIE_COUNT];
+	MovingEnemy* _ghosts[GHOST_COUNT];
 
 	// Current number of collisions (TODO remove when actual handling)
 	int _collisionCount;
@@ -68,9 +74,15 @@ private:
 
 	/// <summary> Check and handle collisions between pacman and munchies </summary>
 	void CheckMunchieCollisions();
+
+	/// <summary> Check and handle collisions between ghost and munchies </summary>
+	void CheckGhostCollisions();
 	
-	/// <summary> Checks whether Pacman has collided with the wall. </summary>
+	/// <summary> Checks whether Pacman has left the edge of the screen. </summary>
 	void CheckViewportCollision();
+	
+	/// <summary> Check and handle collisions between pacman and walls </summary>
+	bool CheckWallCollisions();
 
 	/// <summary> Update position of Pacman </summary>
 	void UpdatePacmanMovement(int elapsedTime);
@@ -80,6 +92,9 @@ private:
 	
 	/// <summary> Update animation of munchies </summary>
 	void UpdateMunchieFrame(Food* munchie, int elapsedTime);
+	
+	/// <summary> Update animation of ghosts </summary>
+	void UpdateGhostFrame(MovingEnemy* munchie, int elapsedTime);
 
 public:
 	/// <summary> Constructs the Pacman class. </summary>

@@ -93,6 +93,7 @@
   <ItemGroup>
     <ClInclude Include="Food.h" />
     <ClInclude Include="MenuState.h" />
+    <ClInclude Include="MovingEnemy.h" />
     <ClInclude Include="Pacman.h" />
     <ClInclude Include="Player.h" />
   </ItemGroup>
