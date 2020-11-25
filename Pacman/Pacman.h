@@ -17,7 +17,7 @@ using namespace S2D;
 #include "MenuState.h"
 #include "Player.h"
 #include "Food.h"
-#include "MovingEnemy.h"
+#include "GhostEnemy.h"
 
 // Screen width and height
 #define SCREEN_WIDTH 512
@@ -31,7 +31,7 @@ using namespace S2D;
 #define MUNCHIE_COUNT 10
 
 // Number of ghosts to spawn
-#define GHOST_COUNT 5
+#define GHOST_COUNT 4
 
 // Declares the Pacman class which inherits from the Game class.
 // This allows us to overload the Game class methods to help us
@@ -49,7 +49,7 @@ private:
 	// Data to represent munchies, walls and ghosts
 	Food* _munchies[MUNCHIE_COUNT];
 	Food* _walls[MUNCHIE_COUNT];
-	MovingEnemy* _ghosts[GHOST_COUNT];
+	GhostEnemy* _ghosts[GHOST_COUNT];
 
 	// Current number of collisions (TODO remove when actual handling)
 	int _collisionCount;
@@ -58,19 +58,13 @@ private:
 	Vector2* _stringPosition;
 
 	/// <summary> Perform movement inputs </summary>
-	void Input(Input::KeyboardState* keyboardState);
+	void HandleMovementInput(Input::KeyboardState* keyboardState);
+
+	/// <summary> Check the start menu input </summary>
+	void CheckStart(Input::KeyboardState* keyboardState, Input::Keys startKey);
 
 	/// <summary> Check the pause menu input </summary>
 	void CheckPaused(Input::KeyboardState* keyboardState, Input::Keys pauseKey);
-	
-	/// <summary> Check whether two Rects overlap </summary>
-	bool CheckBoxCollision(Rect* rect1, Rect* rect2);
-	
-	/// <summary> Check whether a Rect overlaps with another rectangle of the given coordinates </summary>
-	bool CheckBoxCollision(Rect* rect1, float left2, float right2, float top2, float bottom2);
-
-	/// <summary> Check whether two rectangles overlap, given the X and Y coordinates of their sides </summary>
-	bool CheckBoxCollision(float left1, float right1, float top1, float bottom1, float left2, float right2, float top2, float bottom2);
 
 	/// <summary> Check and handle collisions between pacman and munchies </summary>
 	void CheckMunchieCollisions();
@@ -82,7 +76,7 @@ private:
 	void CheckViewportCollision();
 	
 	/// <summary> Check and handle collisions between pacman and walls </summary>
-	bool CheckWallCollisions();
+	bool CheckWallCollisions(Vector2* position);
 
 	/// <summary> Update position of Pacman </summary>
 	void UpdatePacmanMovement(int elapsedTime);
@@ -93,8 +87,8 @@ private:
 	/// <summary> Update animation of munchies </summary>
 	void UpdateMunchieFrame(Food* munchie, int elapsedTime);
 	
-	/// <summary> Update animation of ghosts </summary>
-	void UpdateGhostFrame(MovingEnemy* munchie, int elapsedTime);
+	/// <summary> Update movement of ghosts </summary>
+	void UpdateGhosts(int elapsedTime);
 
 public:
 	/// <summary> Constructs the Pacman class. </summary>

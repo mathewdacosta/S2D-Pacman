@@ -88,12 +88,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="GhostEnemy.cpp" />
     <ClCompile Include="Pacman.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BoxCollisions.h" />
     <ClInclude Include="Food.h" />
     <ClInclude Include="MenuState.h" />
-    <ClInclude Include="MovingEnemy.h" />
+    <ClInclude Include="MoveDirection.h" />
+    <ClInclude Include="GhostEnemy.h" />
     <ClInclude Include="Pacman.h" />
     <ClInclude Include="Player.h" />
   </ItemGroup>
