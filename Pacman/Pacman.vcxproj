@@ -90,6 +90,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="GhostEnemy.cpp" />
     <ClCompile Include="Pacman.cpp" />
+    <ClCompile Include="Player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoxCollisions.h" />
@@ -99,6 +100,22 @@
     <ClInclude Include="GhostEnemy.h" />
     <ClInclude Include="Pacman.h" />
     <ClInclude Include="Player.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Textures\Cherry.png" />
+    <Content Include="Textures\GhostBlue.png" />
+    <Content Include="Textures\Ghosts.png" />
+    <Content Include="Textures\MenuText.png" />
+    <Content Include="Textures\MenuText.xcf" />
+    <Content Include="Textures\Munchie.tga" />
+    <Content Include="Textures\MunchieInverted.tga" />
+    <Content Include="Textures\Pacman.piskel" />
+    <Content Include="Textures\Pacman.png" />
+    <Content Include="Textures\Transparency.png" />
+    <Content Include="Textures\WallTemp.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Sounds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -16,6 +16,8 @@ class GhostEnemy
 {
 private:
     int lastDecisionTime = 0;
+    void UpdateAnimation(int elapsedTime) const;
+    void UpdatePosition(int elapsedTime) const;
     
 public:
     float speed; // movement speed
@@ -28,6 +30,4 @@ public:
 
     void ChangeDirection(int elapsedTime);
     void Update(int elapsedTime);
-    void UpdateAnimation(int elapsedTime);
-    void UpdatePosition(int elapsedTime);
 };

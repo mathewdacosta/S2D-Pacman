@@ -24,7 +24,6 @@ using namespace S2D;
 #define SCREEN_HEIGHT 658
 
 // Number of animation frames for player and munchie
-#define PLAYER_FRAMES 8
 #define MUNCHIE_FRAMES 2
 
 // Number of munchies to spawn
@@ -44,7 +43,6 @@ private:
 
 	// Data to represent Pacman
 	Player* _player;
-	bool _sprintKeyDown;
 
 	// Data to represent munchies, walls and ghosts
 	Food* _munchies[MUNCHIE_COUNT];
@@ -57,9 +55,6 @@ private:
 	// Position for debug string
 	Vector2* _stringPosition;
 
-	/// <summary> Perform movement inputs </summary>
-	void HandleMovementInput(Input::KeyboardState* keyboardState);
-
 	/// <summary> Check the start menu input </summary>
 	void CheckStart(Input::KeyboardState* keyboardState, Input::Keys startKey);
 
@@ -68,21 +63,12 @@ private:
 
 	/// <summary> Check and handle collisions between pacman and munchies </summary>
 	void CheckMunchieCollisions();
-
-	/// <summary> Check and handle collisions between ghost and munchies </summary>
-	void CheckGhostCollisions();
 	
 	/// <summary> Checks whether Pacman has left the edge of the screen. </summary>
 	void CheckViewportCollision();
 	
 	/// <summary> Check and handle collisions between pacman and walls </summary>
 	bool CheckWallCollisions(Vector2* position);
-
-	/// <summary> Update position of Pacman </summary>
-	void UpdatePacmanMovement(int elapsedTime);
-	
-	/// <summary> Update animation of Pacman </summary>
-	void UpdatePacmanFrame(int elapsedTime);
 	
 	/// <summary> Update animation of munchies </summary>
 	void UpdateMunchieFrame(Food* munchie, int elapsedTime);

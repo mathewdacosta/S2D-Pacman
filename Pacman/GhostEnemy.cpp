@@ -19,7 +19,7 @@ void GhostEnemy::Update(int elapsedTime)
     UpdateAnimation(elapsedTime);
 }
 
-void GhostEnemy::UpdateAnimation(int elapsedTime)
+void GhostEnemy::UpdateAnimation(int elapsedTime) const
 {
     int column = static_cast<int>(type);
     int row = static_cast<int>(direction);
@@ -28,7 +28,7 @@ void GhostEnemy::UpdateAnimation(int elapsedTime)
     sourceRect->Y = row * sourceRect->Height;
 }
 
-void GhostEnemy::UpdatePosition(const int elapsedTime)
+void GhostEnemy::UpdatePosition(const int elapsedTime) const
 {
     const float movementAmount = speed * elapsedTime;
     switch (direction)

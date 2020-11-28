@@ -19,19 +19,7 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
         .pKeyDown = false
     };
 
-    _player = new Player{
-        ._cBaseSpeed = 0.1f,
-        ._cSprintMultiplier = 2.1f,
-        ._cSprintDuration = 2000,
-        ._cSprintCooldown = 5000,
-        ._cFrameTime = 60,
-        .animCurrentTime = 0,
-        .animFrame = 0,
-        .sprintTime = 0,
-        .sprintCooldown = 0,
-        .dead = false
-    };
-    _sprintKeyDown = false;
+    _player = new Player();
 
     for (int i = 0; i < MUNCHIE_COUNT; i++)
     {
@@ -45,7 +33,8 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
     }
 
     //Initialise important Game aspects
-    Graphics::Initialise(argc, argv, this, SCREEN_WIDTH, SCREEN_HEIGHT, false, 25, 25, "Logo here: The Game", 60);
+    Audio::Initialise();
+    Graphics::Initialise(argc, argv, this, SCREEN_WIDTH, SCREEN_HEIGHT, false, 25, 25, "Pacman", 60);
     Input::Initialise();
 
     // Start the Game Loop - This calls Update and Draw in game loop
@@ -175,7 +164,7 @@ void Pacman::Update(int elapsedTime)
     if (_menu->paused) return;
 
     // Handle movement inputs
-    HandleMovementInput(keyboardState);
+    _player->HandleMovementInput(keyboardState);
 
     // Store last position in case of collision
     Vector2 lastPosition = Vector2{
@@ -184,7 +173,7 @@ void Pacman::Update(int elapsedTime)
     };
 
     // Update movement according to input
-    UpdatePacmanMovement(elapsedTime);
+    _player->UpdatePosition(elapsedTime);
 
     if (CheckWallCollisions(_player->position))
     {
@@ -192,21 +181,21 @@ void Pacman::Update(int elapsedTime)
         _player->position->Y = lastPosition.Y;
     }
 
-    // Check viewport boundaries
+    // Check whether Pacman is off viewport boundaries
     CheckViewportCollision();
 
     // Check collisions with munchies
     CheckMunchieCollisions();
 
     // Update animation frames
-    UpdatePacmanFrame(elapsedTime);
+    _player->UpdateAnimation(elapsedTime);
+    
     for (int i = 0; i < MUNCHIE_COUNT; i++)
     {
         UpdateMunchieFrame(_munchies[i], elapsedTime);
         UpdateMunchieFrame(_walls[i], elapsedTime);
     }
 
-    // TODO: do AI and collisions
     UpdateGhosts(elapsedTime);
 }
 
@@ -249,8 +238,9 @@ void Pacman::Draw(int elapsedTime)
         // Draws String
         SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
 
-        SpriteBatch::DrawRectangle(12, 760, _player->sprintTime / 2, 4, Color::Blue);
-        SpriteBatch::DrawRectangle(12, 764, _player->sprintCooldown / 5, 4, Color::Cyan);
+        // TODO: sprint meter display        
+        // SpriteBatch::DrawRectangle(12, 760, _player->sprintTime / 2, 4, Color::Blue);
+        // SpriteBatch::DrawRectangle(12, 764, _player->sprintCooldown / 5, 4, Color::Cyan);
 
         // Draw pause menu
         if (_menu->paused)
@@ -268,40 +258,6 @@ void Pacman::Draw(int elapsedTime)
     }
 
     SpriteBatch::EndDraw(); // Ends Drawing
-}
-
-void Pacman::HandleMovementInput(Input::KeyboardState* keyboardState)
-{
-    // Check WASD for directional inputs
-    if (keyboardState->IsKeyDown(Input::Keys::D))
-    {
-        _player->direction = MoveDirection::Right;
-    }
-    else if (keyboardState->IsKeyDown(Input::Keys::A))
-    {
-        _player->direction = MoveDirection::Left;
-    }
-    else if (keyboardState->IsKeyDown(Input::Keys::S))
-    {
-        _player->direction = MoveDirection::Down;
-    }
-    else if (keyboardState->IsKeyDown(Input::Keys::W))
-    {
-        _player->direction = MoveDirection::Up;
-    }
-
-    // Sprint
-    if (keyboardState->IsKeyDown(Input::Keys::LEFTSHIFT) && !_sprintKeyDown && _player->sprintCooldown <= 0)
-    {
-        _player->sprintTime = _player->_cSprintDuration;
-        _player->sprintCooldown = _player->_cSprintCooldown;
-        _sprintKeyDown = true;
-    }
-
-    if (keyboardState->IsKeyUp(Input::Keys::LEFTSHIFT))
-    {
-        _sprintKeyDown = false;
-    }
 }
 
 void Pacman::CheckStart(Input::KeyboardState* keyboardState, Input::Keys startKey)
@@ -386,47 +342,6 @@ void Pacman::CheckViewportCollision()
     }
 }
 
-void Pacman::UpdatePacmanMovement(int elapsedTime)
-{
-    float movementAmount = _player->_cBaseSpeed * elapsedTime;
-
-    // Handle sprint modifier
-    // TODO: turn this into a meter that depletes on hold only + recharges
-    if (_player->sprintTime > 0)
-    {
-        movementAmount *= _player->_cSprintMultiplier;
-        _player->sprintTime -= elapsedTime;
-    }
-    else
-    {
-        _player->sprintTime = 0;
-        if (_player->sprintCooldown > 0)
-        {
-            _player->sprintCooldown -= elapsedTime;
-        }
-        else
-        {
-            _player->sprintCooldown = 0;
-        }
-    }
-
-    // Move in current facing direction by current move amount
-    switch (_player->direction)
-    {
-    case MoveDirection::Right:
-        _player->position->X += movementAmount; // Moves Pacman +x
-        break;
-    case MoveDirection::Left:
-        _player->position->X -= movementAmount; // Moves Pacman -x
-        break;
-    case MoveDirection::Down:
-        _player->position->Y += movementAmount; // Moves Pacman +y
-        break;
-    case MoveDirection::Up:
-        _player->position->Y -= movementAmount; // Moves Pacman -y
-        break;
-    }
-}
 
 void Pacman::UpdateGhosts(int elapsedTime)
 {
@@ -463,23 +378,6 @@ void Pacman::UpdateGhosts(int elapsedTime)
             _collisionCount += 100; // todo death
         }
     }
-}
-
-
-void Pacman::UpdatePacmanFrame(int elapsedTime)
-{
-    // Increment Pacman animation frame
-    _player->animCurrentTime += elapsedTime;
-    if (_player->animCurrentTime > _player->_cFrameTime)
-    {
-        // _player->animCurrentTime = 0;
-        _player->animCurrentTime -= _player->_cFrameTime;
-        _player->animFrame = (_player->animFrame + 1) % PLAYER_FRAMES;
-        _player->sourceRect->X = _player->sourceRect->Width * _player->animFrame;
-    }
-
-    // Update Pacman direction
-    _player->sourceRect->Y = _player->sourceRect->Height * static_cast<int>(_player->direction);
 }
 
 void Pacman::UpdateMunchieFrame(Food* munchie, int elapsedTime)
