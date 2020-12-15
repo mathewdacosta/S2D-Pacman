@@ -8,15 +8,19 @@
 	#endif
 #endif
 
+#include <vector>
 
 // Include S2D and use namespace
+#include "Wall.h"
 #include "S2D/S2D.h"
 using namespace S2D;
 
 // Include our types
 #include "MenuState.h"
+#include "SimpleAnimatedEntity.h"
+#include "Cherry.h"
+#include "Munchie.h"
 #include "Player.h"
-#include "Food.h"
 #include "GhostEnemy.h"
 
 // Screen width and height
@@ -26,10 +30,10 @@ using namespace S2D;
 // Number of animation frames for player and munchie
 #define MUNCHIE_FRAMES 2
 
-// Number of munchies to spawn
-#define MUNCHIE_COUNT 10
-
-// Number of ghosts to spawn
+// Number of entities of each type to spawn
+#define MUNCHIE_COUNT 50
+#define CHERRY_COUNT 10
+#define WALL_COUNT 30
 #define GHOST_COUNT 4
 
 // Declares the Pacman class which inherits from the Game class.
@@ -38,6 +42,9 @@ using namespace S2D;
 class Pacman : public Game
 {
 private:
+	vector<Texture2D*> _textures;
+	vector<Entity*> _entities;
+	
 	// Data for start and pause menus
 	MenuState* _menu;
 
@@ -45,9 +52,17 @@ private:
 	Player* _player;
 
 	// Data to represent munchies, walls and ghosts
-	Food* _munchies[MUNCHIE_COUNT];
-	Food* _walls[MUNCHIE_COUNT];
-	GhostEnemy* _ghosts[GHOST_COUNT];
+	Munchie* _munchies;
+	Cherry* _cherries;
+	Wall* _walls;
+	GhostEnemy* _ghosts;
+
+	// Global textures
+	Texture2D* _playerTexture;
+	Texture2D* _munchieTexture;
+	Texture2D* _cherryTexture;
+	Texture2D* _wallTexture;
+	Texture2D* _ghostTexture;
 
 	// Current number of collisions (TODO remove when actual handling)
 	int _collisionCount;
@@ -64,14 +79,8 @@ private:
 	/// <summary> Check and handle collisions between pacman and munchies </summary>
 	void CheckMunchieCollisions();
 	
-	/// <summary> Checks whether Pacman has left the edge of the screen. </summary>
-	void CheckViewportCollision();
-	
 	/// <summary> Check and handle collisions between pacman and walls </summary>
-	bool CheckWallCollisions(Vector2* position);
-	
-	/// <summary> Update animation of munchies </summary>
-	void UpdateMunchieFrame(Food* munchie, int elapsedTime);
+	bool CheckWallCollisions(int x, int y, int width, int height);
 	
 	/// <summary> Update movement of ghosts </summary>
 	void UpdateGhosts(int elapsedTime);

@@ -7,6 +7,11 @@ void GhostEnemy::ChangeDirection(int elapsedTime)
     direction = static_cast<MoveDirection>(rand() % 4);
 }
 
+void GhostEnemy::Draw()
+{
+    SpriteBatch::Draw(texture, position, sourceRect, Vector2::Zero, 1.0f, 0.0f, Color::White, SpriteEffect::NONE);
+}
+
 void GhostEnemy::Update(int elapsedTime)
 {
     lastDecisionTime += elapsedTime;

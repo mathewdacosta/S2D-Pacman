@@ -87,19 +87,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Cherry.cpp" />
+    <ClCompile Include="SimpleAnimatedEntity.cpp" />
+    <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="Food.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="GhostEnemy.cpp" />
+    <ClCompile Include="Munchie.cpp" />
     <ClCompile Include="Pacman.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Wall.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoxCollisions.h" />
+    <ClInclude Include="Cherry.h" />
+    <ClInclude Include="Entity.h" />
+    <ClInclude Include="SimpleAnimatedEntity.h" />
     <ClInclude Include="Food.h" />
     <ClInclude Include="MenuState.h" />
     <ClInclude Include="MoveDirection.h" />
     <ClInclude Include="GhostEnemy.h" />
+    <ClInclude Include="Munchie.h" />
     <ClInclude Include="Pacman.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="Wall.h" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Textures\Cherry.png" />
@@ -107,8 +118,7 @@
     <Content Include="Textures\Ghosts.png" />
     <Content Include="Textures\MenuText.png" />
     <Content Include="Textures\MenuText.xcf" />
-    <Content Include="Textures\Munchie.tga" />
-    <Content Include="Textures\MunchieInverted.tga" />
+    <Content Include="Textures\Munchie.png" />
     <Content Include="Textures\Pacman.piskel" />
     <Content Include="Textures\Pacman.png" />
     <Content Include="Textures\Transparency.png" />
