@@ -19,6 +19,10 @@ SimpleAnimatedEntity::~SimpleAnimatedEntity()
 
 void SimpleAnimatedEntity::Update(int elapsedTime)
 {
+    // Skip animation when duration <= 0; allows non-animating sprites e.g. walls
+    if (_animFrameDuration <= 0)
+        return;
+    
     // Increment munchie animation frame
     _animCurrentTime += elapsedTime;
     if (_animCurrentTime > _animFrameDuration)

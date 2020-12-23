@@ -16,21 +16,35 @@ enum class GhostType
 class GhostEnemy : public Entity
 {
 private:
-    int lastDecisionTime = 0;
+    float _speed; // movement speed
+    Vector2* _position; // position on screen
+    Rect* _sourceRect; // current location in tilemap
+    Texture2D* _texture; // tilemap
+    MoveDirection _direction; // current movement direction
+    GhostType _type; // current ghost type
 
+    int _decisionTime; // interval between changing direction
+    int _lastDecisionTime; // time since last decision
+    
     void UpdateAnimation(int elapsedTime) const;
-    void UpdatePosition(int elapsedTime) const;
+    void UpdatePosition(int elapsedTime);
     
 public:
-    float speed; // movement speed
-    Vector2* position; // position on screen
-    Rect* sourceRect; // current location in tilemap
-    Texture2D* texture; // tilemap
-    MoveDirection direction; // current movement direction
-    GhostType type; // current ghost type
-    int decisionTime; // interval between changing direction
+    GhostEnemy(GhostType type, int initialX, int initialY, MoveDirection initialDirection);
+    ~GhostEnemy();
 
+    // Properties
+    float GetPositionX();
+    float GetPositionY();
+    int GetWidth();
+    int GetHeight();
+    void SetPosition(float x, float y);
+    void SetTexture(Texture2D* texture);
+    
+    // Game logic    
     void ChangeDirection(int elapsedTime);
+
+    // Game loop
     void Draw() override;
     void Update(int elapsedTime);
 };

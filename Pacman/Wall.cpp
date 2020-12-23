@@ -12,7 +12,6 @@ Wall::Wall() : SimpleAnimatedEntity(
 {
 }
 
-
 Wall::~Wall()
 {
     delete _sourceRect;

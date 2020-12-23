@@ -4,6 +4,7 @@
 
 #include "Entity.h"
 #include "MoveDirection.h"
+#include "Wall.h"
 #include "S2D/S2D.h"
 using namespace S2D;
 
@@ -31,7 +32,6 @@ private:
     Texture2D* _texture;                        // tilemap
 
     void CheckViewportCollision();
-    void UpdateAnimation(int elapsedTime);
     void UpdatePosition(int elapsedTime);
 
 public:
@@ -44,11 +44,13 @@ public:
     void SetDead(bool dead);
 
     Vector2* GetPosition();
+    void SetPosition(int x, int y);
     int GetWidth();
     int GetHeight();
     
     /// <summary> Perform movement inputs </summary>
     void HandleMovementInput(Input::KeyboardState* keyboardState);
+    void UpdateAnimation(int elapsedTime);
 
     void Draw() override;
     void Update(int elapsedTime);

@@ -27,20 +27,8 @@ void Player::LoadTexture()
 
 void Player::Update(int elapsedTime)
 {
-    // Store last position in case of collision
-    Vector2 lastPosition = Vector2{
-        _position->X,
-        _position->Y
-    };
-
     // Update movement according to input
     UpdatePosition(elapsedTime);
-
-    // if (CheckWallCollisions(_position))
-    // {
-    //     _position->X = lastPosition.X;
-    //     _position->Y = lastPosition.Y;
-    // }
 
     // Check whether Pacman is off viewport boundaries
     CheckViewportCollision();
@@ -73,6 +61,12 @@ Vector2* Player::GetPosition()
     return _position;
 }
 
+
+void Player::SetPosition(int x, int y)
+{
+    _position->X = x;
+    _position->Y = y;
+}
 
 int Player::GetWidth()
 {

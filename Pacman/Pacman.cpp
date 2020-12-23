@@ -20,10 +20,27 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
     };
 
     _player = new Player();
-    _munchies = new Munchie[MUNCHIE_COUNT];
-    _cherries = new Cherry[CHERRY_COUNT];
-    _walls = new Wall[WALL_COUNT];
-    _ghosts = new GhostEnemy[GHOST_COUNT];
+    _collisionCount = 0;
+
+    for (int i = 0; i < MUNCHIE_COUNT; i++)
+        _munchies[i] = new Munchie();
+
+    for (int i = 0; i < CHERRY_COUNT; i++)
+        _cherries[i] = new Cherry();
+
+    for (int i = 0; i < WALL_COUNT; i++)
+        _walls[i] = new Wall();
+
+    for (int i = 0; i < GHOST_COUNT; i++)
+    {
+        GhostType type = static_cast<GhostType>(i % 4);
+        MoveDirection direction = static_cast<MoveDirection>(rand() % 4);
+        int x = rand() % (SCREEN_WIDTH - 20);
+        int y = rand() % (SCREEN_HEIGHT - 20);
+        _ghosts[i] = new GhostEnemy(type, x, y, direction);
+    }
+
+    SetRandomEntityPositions();
 
     //Initialise important Game aspects
     Audio::Initialise();
@@ -47,9 +64,20 @@ Pacman::~Pacman()
     delete _menu;
 
     delete _player;
+    for (int i = 0; i < MUNCHIE_COUNT; i++)
+        delete _munchies[i];
     delete[] _munchies;
+
+    for (int i = 0; i < CHERRY_COUNT; i++)
+        delete _cherries[i];
     delete[] _cherries;
+
+    for (int i = 0; i < WALL_COUNT; i++)
+        delete _walls[i];
     delete[] _walls;
+
+    for (int i = 0; i < GHOST_COUNT; i++)
+        delete _ghosts[i];
     delete[] _ghosts;
 
     delete _playerTexture;
@@ -80,7 +108,7 @@ void Pacman::LoadContent()
         (Graphics::GetViewportHeight() / 3.0f) - (_menu->logoSourceRect->Height / 2.0f),
         _menu->logoSourceRect->Width,
         _menu->logoSourceRect->Height);
-    _menu->helpPosition = new Vector2(10, Graphics::GetViewportHeight() - 28);
+    _menu->helpPosition = new Vector2(10, Graphics::GetViewportHeight() - 80);
 
     // Load Pacman
     _player->LoadTexture();
@@ -88,26 +116,26 @@ void Pacman::LoadContent()
     // Load and set textures
     Texture2D* munchieTexture = new Texture2D();
     munchieTexture->Load("Textures/Munchie.png", false);
-    
-    Texture2D* cherryTexture = new Texture2D();
-    munchieTexture->Load("Textures/Cherry.png", false);
-    
-    Texture2D* wallTexture = new Texture2D();
-    wallTexture->Load("Textures/WallTemp.png", false);
-    
+
     for (int i = 0; i < MUNCHIE_COUNT; i++)
     {
-        _munchies[i].SetTexture(munchieTexture);
+        _munchies[i]->SetTexture(munchieTexture);
     }
+
+    Texture2D* cherryTexture = new Texture2D();
+    cherryTexture->Load("Textures/Cherry.png", false);
 
     for (int i = 0; i < CHERRY_COUNT; i++)
     {
-        _cherries[i].SetTexture(cherryTexture);
+        _cherries[i]->SetTexture(cherryTexture);
     }
+
+    Texture2D* wallTexture = new Texture2D();
+    wallTexture->Load("Textures/WallTemp.png", false);
 
     for (int i = 0; i < WALL_COUNT; i++)
     {
-        _walls[i].SetTexture(wallTexture);
+        _walls[i]->SetTexture(wallTexture);
     }
 
     // Load enemy
@@ -115,13 +143,7 @@ void Pacman::LoadContent()
     ghostTexture->Load("Textures/Ghosts.png", false);
     for (int i = 0; i < GHOST_COUNT; i++)
     {
-        _ghosts[i].texture = ghostTexture;
-        _ghosts[i].type = static_cast<GhostType>(i % 4);
-        _ghosts[i].direction = static_cast<MoveDirection>(rand() % 4);
-        _ghosts[i].sourceRect = new Rect(0, 0, 20, 20);
-        _ghosts[i].position = new Vector2(rand() % (SCREEN_WIDTH - 20), rand() % (SCREEN_HEIGHT - 20));
-        _ghosts[i].speed = 0.04f + (static_cast<int>(_ghosts[i].type) * 0.012f);
-        _ghosts[i].decisionTime = 500 + (static_cast<int>(_ghosts[i].type) * 300);
+        _ghosts[i]->SetTexture(ghostTexture);
     }
 
     // Set string position
@@ -141,26 +163,46 @@ void Pacman::Update(int elapsedTime)
     CheckPaused(keyboardState, Input::Keys::P);
     if (_menu->paused) return;
 
-    // Handle movement inputs
-    _player->HandleMovementInput(keyboardState);
+    if (!_player->IsDead())
+    {
+        // Handle movement inputs
+        _player->HandleMovementInput(keyboardState);
 
-    _player->Update(elapsedTime);
-    
+        // Store last position in case of collision
+        const Vector2 lastPosition = Vector2{
+            *_player->GetPosition()
+        };
+
+        // Update player position
+        _player->Update(elapsedTime);
+
+        // Undo movement in case of wall collision 
+        if (CheckWallCollisions(_player->GetPosition()->X, _player->GetPosition()->Y, _player->GetWidth(),
+                                _player->GetHeight()))
+        {
+            _player->SetPosition(lastPosition.X, lastPosition.Y);
+        }
+
+        CheckPlayerCollisions(elapsedTime);
+    }
+
+    // Update all munchies, cherries and walls
     for (int i = 0; i < MUNCHIE_COUNT; i++)
     {
-        _munchies[i].Update(elapsedTime);
-    }
-    
-    for (int i = 0; i < CHERRY_COUNT; i++)
-    {
-        _cherries[i].Update(elapsedTime);
-    }
-    
-    for (int i = 0; i < WALL_COUNT; i++)
-    {
-        _walls[i].Update(elapsedTime);
+        _munchies[i]->Update(elapsedTime);
     }
 
+    for (int i = 0; i < CHERRY_COUNT; i++)
+    {
+        _cherries[i]->Update(elapsedTime);
+    }
+
+    for (int i = 0; i < WALL_COUNT; i++)
+    {
+        _walls[i]->Update(elapsedTime);
+    }
+
+    // Update ghosts
     UpdateGhosts(elapsedTime);
 }
 
@@ -172,27 +214,26 @@ void Pacman::Draw(int elapsedTime)
     {
         // Draws player info string
         std::stringstream stream;
-        stream << "Collisions: " << _collisionCount << "\nX: " << _player->GetPosition()->X << "\nY: " << _player->GetPosition()->Y;
+        stream << "Score: " << _collisionCount << "\nX: " << _player->GetPosition()->X << "\nY: " << _player->
+            GetPosition()->Y;
         SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
 
         _player->Draw();
 
         // Draw munchies, cherries, walls and ghosts
         for (int i = 0; i < MUNCHIE_COUNT; i++)
-            _munchies[i].Draw();
+            _munchies[i]->Draw();
 
         for (int i = 0; i < CHERRY_COUNT; i++)
-            _cherries[i].Draw();
+            _cherries[i]->Draw();
 
         for (int i = 0; i < WALL_COUNT; i++)
-            _walls[i].Draw();
+            _walls[i]->Draw();
 
         for (int i = 0; i < GHOST_COUNT; i++)
-            _ghosts[i].Draw();
+            _ghosts[i]->Draw();
 
-        // TODO: sprint meter display        
-        // SpriteBatch::DrawRectangle(12, 760, _player->sprintTime / 2, 4, Color::Blue);
-        // SpriteBatch::DrawRectangle(12, 764, _player->sprintCooldown / 5, 4, Color::Cyan);
+        
 
         // Draw pause menu
         if (_menu->paused)
@@ -205,7 +246,7 @@ void Pacman::Draw(int elapsedTime)
     {
         SpriteBatch::Draw(_menu->textTexture, _menu->logoDestRect, _menu->logoSourceRect);
         stringstream help;
-        help << "Press SPACE to start, WASD to change direction, P to pause";
+        help << "Press SPACE to start,\nWASD to change direction\nP to pause";
         SpriteBatch::DrawString(help.str().c_str(), _menu->helpPosition, Color::Green);
     }
 
@@ -234,17 +275,28 @@ void Pacman::CheckPaused(Input::KeyboardState* keyboardState, Input::Keys pauseK
 }
 
 
-void Pacman::CheckMunchieCollisions()
+void Pacman::CheckFoodCollisions()
 {
     Vector2* playerPosition = _player->GetPosition();
-    _collisionCount = 0;
     for (int i = 0; i < MUNCHIE_COUNT; ++i)
     {
-        if (BoxCollisions::CheckBoxCollision(_munchies[i].GetBoundingBox(),
+        if (BoxCollisions::CheckBoxCollision(_munchies[i]->GetBoundingBox(),
                                              playerPosition->X, playerPosition->X + _player->GetWidth(),
                                              playerPosition->Y, playerPosition->Y + _player->GetHeight()))
         {
-            _collisionCount++;
+            _collisionCount += 10;
+            _munchies[i]->SetScreenPosition(-100, -100);
+        }
+    }
+
+    for (int i = 0; i < CHERRY_COUNT; ++i)
+    {
+        if (BoxCollisions::CheckBoxCollision(_cherries[i]->GetBoundingBox(),
+                                             playerPosition->X, playerPosition->X + _player->GetWidth(),
+                                             playerPosition->Y, playerPosition->Y + _player->GetHeight()))
+        {
+            _collisionCount += 100;
+            _cherries[i]->SetScreenPosition(-100, -100);
         }
     }
 }
@@ -253,7 +305,7 @@ bool Pacman::CheckWallCollisions(int x, int y, int width, int height)
 {
     for (int i = 0; i < WALL_COUNT; ++i)
     {
-        if (BoxCollisions::CheckBoxCollision(_walls[i].GetBoundingBox(), x, x + width, y, y + height))
+        if (BoxCollisions::CheckBoxCollision(_walls[i]->GetBoundingBox(), x, x + width, y, y + height))
         {
             return true;
         }
@@ -262,24 +314,49 @@ bool Pacman::CheckWallCollisions(int x, int y, int width, int height)
     return false;
 }
 
+void Pacman::SetRandomEntityPositions()
+{
+    for (int i = 0; i < MUNCHIE_COUNT; i++)
+    {
+        int x = rand() % (SCREEN_WIDTH - _munchies[i]->GetBoundingBox()->Width);
+        int y = rand() % (SCREEN_HEIGHT - _munchies[i]->GetBoundingBox()->Height);
+        _munchies[i]->SetScreenPosition(x, y);
+    }
+
+    for (int i = 0; i < CHERRY_COUNT; i++)
+    {
+        int x = rand() % (SCREEN_WIDTH - _cherries[i]->GetBoundingBox()->Width);
+        int y = rand() % (SCREEN_HEIGHT - _cherries[i]->GetBoundingBox()->Height);
+        _cherries[i]->SetScreenPosition(x, y);
+    }
+
+    for (int i = 0; i < WALL_COUNT; i++)
+    {
+        int x = rand() % (SCREEN_WIDTH - _walls[i]->GetBoundingBox()->Width);
+        int y = rand() % (SCREEN_HEIGHT - _walls[i]->GetBoundingBox()->Height);
+        _walls[i]->SetScreenPosition(x, y);
+    }
+}
+
 void Pacman::UpdateGhosts(int elapsedTime)
 {
     for (int i = 0; i < GHOST_COUNT; i++)
     {
-        GhostEnemy currentGhost = _ghosts[i];
-        const float ghostX = currentGhost.position->X;
-        const float ghostY = currentGhost.position->Y;
-        const int ghostWidth = currentGhost.sourceRect->Width;
-        const int ghostHeight = currentGhost.sourceRect->Height;
+        GhostEnemy* currentGhost = _ghosts[i];
 
         const Vector2 lastPosition = Vector2{
-            ghostX,
-            ghostY
+            currentGhost->GetPositionX(),
+            currentGhost->GetPositionY()
         };
 
-        currentGhost.Update(elapsedTime);
+        currentGhost->Update(elapsedTime);
+        
+        const float ghostX = currentGhost->GetPositionX();
+        const float ghostY = currentGhost->GetPositionY();
+        const int ghostWidth = currentGhost->GetWidth();
+        const int ghostHeight = currentGhost->GetHeight();
 
-        if (CheckWallCollisions(ghostX, ghostY, ghostX + ghostWidth, ghostY + ghostHeight) ||
+        if (CheckWallCollisions(ghostX, ghostY, ghostWidth, ghostHeight) ||
             !BoxCollisions::CheckBoxCollision(
                 ghostX, ghostX + ghostWidth,
                 ghostY, ghostY + ghostHeight,
@@ -287,20 +364,25 @@ void Pacman::UpdateGhosts(int elapsedTime)
                 0 + ghostHeight, SCREEN_HEIGHT - ghostHeight
             ))
         {
-            currentGhost.position->X = lastPosition.X;
-            currentGhost.position->Y = lastPosition.Y;
-            currentGhost.ChangeDirection(elapsedTime);
-        }
-
-        if (BoxCollisions::CheckBoxCollision(
-            _player->GetPosition()->X, _player->GetPosition()->X + _player->GetWidth(),
-            _player->GetPosition()->Y, _player->GetPosition()->Y + _player->GetHeight(),
-            ghostX, ghostX + ghostWidth,
-            ghostY, ghostY + ghostHeight))
-        {
-            _collisionCount += 100;
-            _player->SetDead(true);
+            currentGhost->SetPosition(lastPosition.X, lastPosition.Y);
+            currentGhost->ChangeDirection(elapsedTime);
         }
     }
 }
 
+void Pacman::CheckPlayerCollisions(int elapsedTime)
+{
+    CheckFoodCollisions();
+
+    for (int i = 0; i < GHOST_COUNT; i++)
+    {
+        if (BoxCollisions::CheckBoxCollision(
+            _player->GetPosition()->X, _player->GetPosition()->X + _player->GetWidth(),
+            _player->GetPosition()->Y, _player->GetPosition()->Y + _player->GetHeight(),
+            _ghosts[i]->GetPositionX(), _ghosts[i]->GetPositionX() + _ghosts[i]->GetWidth(),
+            _ghosts[i]->GetPositionY(), _ghosts[i]->GetPositionY() + _ghosts[i]->GetHeight()))
+        {
+            _player->SetDead(true);
+        }
+    }
+}

@@ -52,10 +52,10 @@ private:
 	Player* _player;
 
 	// Data to represent munchies, walls and ghosts
-	Munchie* _munchies;
-	Cherry* _cherries;
-	Wall* _walls;
-	GhostEnemy* _ghosts;
+	Munchie* _munchies[MUNCHIE_COUNT];
+	Cherry* _cherries[CHERRY_COUNT];
+	Wall* _walls[WALL_COUNT];
+	GhostEnemy* _ghosts[GHOST_COUNT];
 
 	// Global textures
 	Texture2D* _playerTexture;
@@ -77,13 +77,17 @@ private:
 	void CheckPaused(Input::KeyboardState* keyboardState, Input::Keys pauseKey);
 
 	/// <summary> Check and handle collisions between pacman and munchies </summary>
-	void CheckMunchieCollisions();
+	void CheckFoodCollisions();
 	
 	/// <summary> Check and handle collisions between pacman and walls </summary>
 	bool CheckWallCollisions(int x, int y, int width, int height);
+
+	/// <summary> Randomises the positions of the munchies, cherries and walls </summary>
+	void SetRandomEntityPositions();
 	
 	/// <summary> Update movement of ghosts </summary>
 	void UpdateGhosts(int elapsedTime);
+	void CheckPlayerCollisions(int elapsedTime);
 
 public:
 	/// <summary> Constructs the Pacman class. </summary>
