@@ -116,6 +116,7 @@
     <Content Include="Textures\Cherry.png" />
     <Content Include="Textures\GhostBlue.png" />
     <Content Include="Textures\Ghosts.png" />
+    <Content Include="Textures\Menu.png" />
     <Content Include="Textures\MenuText.png" />
     <Content Include="Textures\MenuText.xcf" />
     <Content Include="Textures\Munchie.png" />

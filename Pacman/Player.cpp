@@ -27,6 +27,10 @@ void Player::LoadTexture()
 
 void Player::Update(int elapsedTime)
 {
+    if (_dead)
+        // TODO update death animation
+        return;
+    
     // Update movement according to input
     UpdatePosition(elapsedTime);
 

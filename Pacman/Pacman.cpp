@@ -8,15 +8,21 @@
 #include <sstream>
 #include <time.h>
 
+#include "MenuState.h"
+
 Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 {
     srand(time(nullptr));
 
-    _menu = new MenuState{
-        .started = false,
-        .spaceKeyDown = false,
-        .paused = false,
-        .pKeyDown = false
+    _menu = {
+        GameState::MAIN_MENU,
+        false,
+        false,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr
     };
 
     _player = new Player();
@@ -53,15 +59,11 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 
 Pacman::~Pacman()
 {
-    delete _menu->background;
-    delete _menu->rectangle;
-    delete _menu->textTexture;
-    delete _menu->pausedSourceRect;
-    delete _menu->pausedDestRect;
-    delete _menu->logoSourceRect;
-    delete _menu->logoDestRect;
-    delete _menu->helpPosition;
-    delete _menu;
+    delete _menu.overlayBackground;
+    delete _menu.overlayRect;
+    delete _menu.textTexture;
+    delete _menu.pausedSourceRect;
+    delete _menu.pausedDestRect;
 
     delete _player;
     for (int i = 0; i < MUNCHIE_COUNT; i++)
@@ -80,7 +82,6 @@ Pacman::~Pacman()
         delete _ghosts[i];
     delete[] _ghosts;
 
-    delete _playerTexture;
     delete _munchieTexture;
     delete _cherryTexture;
     delete _wallTexture;
@@ -89,26 +90,23 @@ Pacman::~Pacman()
 
 void Pacman::LoadContent()
 {
-    // Set up menu
-    _menu->background = new Texture2D();
-    _menu->background->Load("Textures/Transparency.png", false);
-    _menu->rectangle = new Rect(0.0f, 0.0f, Graphics::GetViewportWidth(), Graphics::GetViewportHeight());
+    // Set up menus
+    _menu.mainMenuBackground = new Texture2D();
+    _menu.mainMenuBackground->Load("Textures/Menu.png", false);
+    
+    _menu.overlayBackground = new Texture2D();
+    _menu.overlayBackground->Load("Textures/Transparency.png", false);
+    _menu.overlayRect = new Rect(0.0f, 0.0f, Graphics::GetViewportWidth(), Graphics::GetViewportHeight());
 
-    _menu->textTexture = new Texture2D();
-    _menu->textTexture->Load("Textures/MenuText.png", false);
-    _menu->pausedSourceRect = new Rect(0.0f, 0.0f, 200, 40);
-    _menu->pausedDestRect = new Rect(
-        (Graphics::GetViewportWidth() - _menu->pausedSourceRect->Width) / 2.0f,
-        (Graphics::GetViewportHeight() - _menu->pausedSourceRect->Height) / 2.0f,
-        _menu->pausedSourceRect->Width,
-        _menu->pausedSourceRect->Height);
-    _menu->logoSourceRect = new Rect(0.0f, 40.0f, 215, 47);
-    _menu->logoDestRect = new Rect(
-        (Graphics::GetViewportWidth() - _menu->logoSourceRect->Width) / 2.0f,
-        (Graphics::GetViewportHeight() / 3.0f) - (_menu->logoSourceRect->Height / 2.0f),
-        _menu->logoSourceRect->Width,
-        _menu->logoSourceRect->Height);
-    _menu->helpPosition = new Vector2(10, Graphics::GetViewportHeight() - 80);
+    _menu.textTexture = new Texture2D();
+    _menu.textTexture->Load("Textures/MenuText.png", false);
+    
+    _menu.pausedSourceRect = new Rect(0.0f, 0.0f, 200, 40);
+    _menu.pausedDestRect = new Rect(
+        (Graphics::GetViewportWidth() - _menu.pausedSourceRect->Width) / 2.0f,
+        (Graphics::GetViewportHeight() - _menu.pausedSourceRect->Height) / 2.0f,
+        _menu.pausedSourceRect->Width,
+        _menu.pausedSourceRect->Height);
 
     // Load Pacman
     _player->LoadTexture();
@@ -155,36 +153,41 @@ void Pacman::Update(int elapsedTime)
     // Gets the current state of the keyboard
     Input::KeyboardState* keyboardState = Input::Keyboard::GetState();
 
-    // Check for start input
-    CheckStart(keyboardState, Input::Keys::SPACE);
-    if (!_menu->started) return;
+    // Check for start game input
+    if (_menu.state == GameState::MAIN_MENU)
+    {
+        CheckStart(keyboardState, Input::Keys::SPACE);
+        return;
+    }
+
+    if (_menu.state == GameState::GAME_OVER)
+    {
+        // TODO check for Q button to exit
+        return;
+    }
 
     // Check for pause input/toggle
     CheckPaused(keyboardState, Input::Keys::P);
-    if (_menu->paused) return;
 
-    if (!_player->IsDead())
-    {
-        // Handle movement inputs
-        _player->HandleMovementInput(keyboardState);
+    if (_menu.state == GameState::PAUSED)
+        return;
+    
+    // Handle movement inputs
+    _player->HandleMovementInput(keyboardState);
 
-        // Store last position in case of collision
-        const Vector2 lastPosition = Vector2{
-            *_player->GetPosition()
-        };
+    // Store last position in case of collision
+    const Vector2 lastPosition = Vector2{
+        *_player->GetPosition()
+    };
 
-        // Update player position
-        _player->Update(elapsedTime);
+    // Update player position
+    _player->Update(elapsedTime);
 
-        // Undo movement in case of wall collision 
-        if (CheckWallCollisions(_player->GetPosition()->X, _player->GetPosition()->Y, _player->GetWidth(),
-                                _player->GetHeight()))
-        {
-            _player->SetPosition(lastPosition.X, lastPosition.Y);
-        }
+    // Undo movement in case of wall collision 
+    if (CheckWallCollisions(_player->GetPosition()->X, _player->GetPosition()->Y, _player->GetWidth(), _player->GetHeight()))
+        _player->SetPosition(lastPosition.X, lastPosition.Y);
 
-        CheckPlayerCollisions(elapsedTime);
-    }
+    CheckPlayerCollisions(elapsedTime);
 
     // Update all munchies, cherries and walls
     for (int i = 0; i < MUNCHIE_COUNT; i++)
@@ -210,14 +213,8 @@ void Pacman::Draw(int elapsedTime)
 {
     SpriteBatch::BeginDraw(); // Starts Drawing
 
-    if (_menu->started)
+    if (_menu.state == GameState::PLAYING || _menu.state == GameState::PAUSED)
     {
-        // Draws player info string
-        std::stringstream stream;
-        stream << "Score: " << _collisionCount << "\nX: " << _player->GetPosition()->X << "\nY: " << _player->
-            GetPosition()->Y;
-        SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
-
         _player->Draw();
 
         // Draw munchies, cherries, walls and ghosts
@@ -233,21 +230,25 @@ void Pacman::Draw(int elapsedTime)
         for (int i = 0; i < GHOST_COUNT; i++)
             _ghosts[i]->Draw();
 
-        
+        // Draws player info string
+        std::stringstream stream;
+        stream << "Score: " << _collisionCount << "\nX: " << _player->GetPosition()->X << "\nY: " << _player->GetPosition()->Y;
+        SpriteBatch::DrawString(stream.str().c_str(), _stringPosition, Color::Green);
 
         // Draw pause menu
-        if (_menu->paused)
+        if (_menu.state == GameState::PAUSED)
         {
-            SpriteBatch::Draw(_menu->background, _menu->rectangle, nullptr);
-            SpriteBatch::Draw(_menu->textTexture, _menu->pausedDestRect, _menu->pausedSourceRect);
+            SpriteBatch::Draw(_menu.overlayBackground, _menu.overlayRect, nullptr);
+            SpriteBatch::Draw(_menu.textTexture, _menu.pausedDestRect, _menu.pausedSourceRect);
         }
     }
-    else
+    else if (_menu.state == GameState::MAIN_MENU)
     {
-        SpriteBatch::Draw(_menu->textTexture, _menu->logoDestRect, _menu->logoSourceRect);
-        stringstream help;
-        help << "Press SPACE to start,\nWASD to change direction\nP to pause";
-        SpriteBatch::DrawString(help.str().c_str(), _menu->helpPosition, Color::Green);
+        SpriteBatch::Draw(_menu.mainMenuBackground, _menu.overlayRect);
+    }
+    else if (_menu.state == GameState::GAME_OVER)
+    {
+        // TODO draw game over screen
     }
 
     SpriteBatch::EndDraw(); // Ends Drawing
@@ -255,25 +256,28 @@ void Pacman::Draw(int elapsedTime)
 
 void Pacman::CheckStart(Input::KeyboardState* keyboardState, Input::Keys startKey)
 {
-    if (!_menu->started && keyboardState->IsKeyDown(startKey))
-        _menu->started = true;
+    if (keyboardState->IsKeyDown(startKey))
+        _menu.state = GameState::PLAYING;
 }
-
 
 void Pacman::CheckPaused(Input::KeyboardState* keyboardState, Input::Keys pauseKey)
 {
-    if (keyboardState->IsKeyDown(pauseKey) && !_menu->pKeyDown)
+    if (keyboardState->IsKeyDown(pauseKey) && !_menu.pKeyDown)
     {
-        _menu->paused = !_menu->paused;
-        _menu->pKeyDown = true; // debounce P key
+        if (_menu.state == GameState::PLAYING)
+            _menu.state = GameState::PAUSED;
+        else if (_menu.state == GameState::PAUSED)
+            _menu.state = GameState::PLAYING;
+
+        // debounce P key
+        _menu.pKeyDown = true;
     }
 
     if (keyboardState->IsKeyUp(pauseKey))
     {
-        _menu->pKeyDown = false;
+        _menu.pKeyDown = false;
     }
 }
-
 
 void Pacman::CheckFoodCollisions()
 {
@@ -350,7 +354,7 @@ void Pacman::UpdateGhosts(int elapsedTime)
         };
 
         currentGhost->Update(elapsedTime);
-        
+
         const float ghostX = currentGhost->GetPositionX();
         const float ghostY = currentGhost->GetPositionY();
         const int ghostWidth = currentGhost->GetWidth();

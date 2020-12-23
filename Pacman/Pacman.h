@@ -42,11 +42,8 @@ using namespace S2D;
 class Pacman : public Game
 {
 private:
-	vector<Texture2D*> _textures;
-	vector<Entity*> _entities;
-	
 	// Data for start and pause menus
-	MenuState* _menu;
+	MenuState _menu;
 
 	// Data to represent Pacman
 	Player* _player;
@@ -58,7 +55,6 @@ private:
 	GhostEnemy* _ghosts[GHOST_COUNT];
 
 	// Global textures
-	Texture2D* _playerTexture;
 	Texture2D* _munchieTexture;
 	Texture2D* _cherryTexture;
 	Texture2D* _wallTexture;

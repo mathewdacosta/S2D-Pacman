@@ -1,20 +1,24 @@
 ﻿#pragma once
 
-// TODO: this handles game loop state and two separate menus, make this nicer
+enum class GameState
+{
+    MAIN_MENU,
+    PLAYING,
+    PAUSED,
+    GAME_OVER
+};
+
 struct MenuState
 {
-    bool started;
-    bool spaceKeyDown;
-    bool paused;
+    GameState state;
+
     bool pKeyDown;
-    
-    Texture2D* background;
-    Rect* rectangle;
+
+    Texture2D* mainMenuBackground;
+    Texture2D* overlayBackground;
+    Rect* overlayRect;
 
     Texture2D* textTexture;
     Rect* pausedSourceRect;
     Rect* pausedDestRect;
-    Rect* logoSourceRect;
-    Rect* logoDestRect;
-    Vector2* helpPosition;
 };
