@@ -9,6 +9,7 @@
 #endif
 
 // Include S2D and use namespace
+#include "Sounds.h"
 #include "S2D/S2D.h"
 using namespace S2D;
 
@@ -38,8 +39,9 @@ using namespace S2D;
 class Pacman : public Game
 {
 private:
-	// Data for start and pause menus
+	// Structs for menu data and sounds
 	MenuState _menu;
+	Sounds _sounds;
 
 	// Data to represent Pacman
 	Player* _player;

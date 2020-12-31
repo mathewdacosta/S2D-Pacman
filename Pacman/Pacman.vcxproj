@@ -96,6 +96,7 @@
     <ClCompile Include="Munchie.cpp" />
     <ClCompile Include="Pacman.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Sounds.cpp" />
     <ClCompile Include="Wall.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -110,9 +111,13 @@
     <ClInclude Include="Munchie.h" />
     <ClInclude Include="Pacman.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="Sounds.h" />
     <ClInclude Include="Wall.h" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Sounds\gameover.wav" />
+    <Content Include="Sounds\munch.wav" />
+    <Content Include="Sounds\pop.wav" />
     <Content Include="Textures\Cherry.png" />
     <Content Include="Textures\GhostBlue.png" />
     <Content Include="Textures\Ghosts.png" />
@@ -124,9 +129,6 @@
     <Content Include="Textures\Pacman.png" />
     <Content Include="Textures\Transparency.png" />
     <Content Include="Textures\WallTemp.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Sounds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -16,7 +16,7 @@ private:
     const float _cSprintDepleteRate = 1.0f;     // multiplier for depletion of sprint meter
     const float _cSprintRecoveryRate = 0.4f;    // multiplier for recovery of sprint meter 
     const float _cSprintMaximum = 2000;         // maximum amount of sprint meter
-    const int _cAnimFrameDuration = 60;         // interval between animation frames
+    const int _cAnimFrameDuration = 90;         // interval between animation frames
     
     int _animCurrentTime = 0;                   // current time since last update
     int _animFrame = 0;                         // current frame in animation

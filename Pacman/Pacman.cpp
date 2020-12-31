@@ -15,12 +15,14 @@
 
 Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
 {
+    // Seed rand()
     srand(time(nullptr));
 
+    // Initialise menu struct
     _menu = {
         GameState::MAIN_MENU,
         false,
-        false,
+        nullptr,
         nullptr,
         nullptr,
         nullptr,
@@ -28,9 +30,16 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
         nullptr
     };
 
+    // Set string positions
+    _gameScorePosition = new Vector2(10.0f, 25.0f);
+    _gameOverScorePosition = new Vector2(GAME_OVER_SCORE_X, GAME_OVER_SCORE_Y);
+
+    // Initialise player and score
+    // TODO move sprint here + use reference?
     _player = new Player();
     _collisionCount = 0;
 
+    // Initialise munchies, cherries, walls and ghosts
     for (int i = 0; i < MUNCHIE_COUNT; i++)
         _munchies[i] = new Munchie();
 
@@ -52,7 +61,7 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv)
     // Randomise positions of game objects
     SetRandomEntityPositions();
 
-    //Initialise important Game aspects
+    // Initialise S2D
     Audio::Initialise();
     Graphics::Initialise(argc, argv, this, SCREEN_WIDTH, SCREEN_HEIGHT, false, 25, 25, "Pacman", 60);
     Input::Initialise();
@@ -121,7 +130,7 @@ void Pacman::LoadContent()
         _menu.pausedSourceRect->Width,
         _menu.pausedSourceRect->Height);
 
-    // Load Pacman
+    // Load Pacman texture
     _player->LoadTexture();
 
     // Load and set textures
@@ -157,9 +166,18 @@ void Pacman::LoadContent()
         _ghosts[i]->SetTexture(ghostTexture);
     }
 
-    // Set string position
-    _gameScorePosition = new Vector2(10.0f, 25.0f);
-    _gameOverScorePosition = new Vector2(GAME_OVER_SCORE_X, GAME_OVER_SCORE_Y);
+    // Load sounds
+    _sounds.pop = new SoundEffect();
+    _sounds.pop->Load("Sounds/pop.wav");
+    _sounds.pop->SetGain(0.2f);
+    
+    _sounds.munch = new SoundEffect();
+    _sounds.munch->Load("Sounds/munch.wav");
+    _sounds.munch->SetGain(0.15f);
+    
+    _sounds.gameOver = new SoundEffect();
+    _sounds.gameOver->Load("Sounds/gameover.wav");
+    _sounds.gameOver->SetGain(0.13f);
 }
 
 void Pacman::Update(int elapsedTime)
@@ -323,6 +341,7 @@ void Pacman::CheckFoodCollisions()
         {
             _collisionCount += 10;
             _munchies[i]->SetScreenPosition(-100, -100);
+            Audio::Play(_sounds.pop);
         }
     }
 
@@ -334,6 +353,7 @@ void Pacman::CheckFoodCollisions()
         {
             _collisionCount += 100;
             _cherries[i]->SetScreenPosition(-100, -100);
+            Audio::Play(_sounds.munch);
         }
     }
 }
@@ -420,6 +440,7 @@ void Pacman::CheckPlayerCollisions(int elapsedTime)
             _ghosts[i]->GetPositionY(), _ghosts[i]->GetPositionY() + _ghosts[i]->GetHeight()))
         {
             _player->Kill();
+            Audio::Play(_sounds.gameOver);
         }
     }
 }

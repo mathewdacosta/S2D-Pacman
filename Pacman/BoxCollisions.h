@@ -3,6 +3,7 @@
 #include "S2D/S2D.h"
 using namespace S2D;
 
+// Assorted functions for checking box collisions
 namespace BoxCollisions
 {
 	/// <summary> Check whether two rectangles overlap, given the X and Y coordinates of their sides </summary>
