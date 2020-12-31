@@ -4,6 +4,6 @@
 class Food : public SimpleAnimatedEntity
 {
 protected:
-    Food(int width, int height);
+    Food(int width, int height, int frameCount, int frameSpeed);
     ~Food();
 };

@@ -4,7 +4,7 @@
 //
 // author: Paul Boocock, Staffordshire University
 //
-// remarks: The reason this is in namespaces, rather than a static class pattern: http://stackoverflow.com/questions/9321/how-do-you-create-a-static-class-in-c/112451#112451
+// remarks: The reason this is in namespaces, rather than a static class pattern: 
 
 #pragma once
 

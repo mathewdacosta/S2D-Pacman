@@ -1,11 +1,11 @@
 ﻿#include "Food.h"
 
-Food::Food(int width, int height) : SimpleAnimatedEntity(
+Food::Food(int width, int height, int frameCount, int frameSpeed) : SimpleAnimatedEntity(
     new Rect(0, 0, width, height),
     new Rect(-200, 0, width, height),
-    2,
+    frameCount,
     width,
-    (rand() % 170) + 300,
+    frameSpeed,
     0,
     rand() % 1
 )

@@ -40,8 +40,8 @@ public:
 
     void LoadTexture();
     
-    bool IsDead() const;
-    void SetDead(bool dead);
+    bool IsDeathAnimationComplete() const;
+    void Kill();
 
     Vector2* GetPosition();
     void SetPosition(int x, int y);
@@ -51,6 +51,7 @@ public:
     /// <summary> Perform movement inputs </summary>
     void HandleMovementInput(Input::KeyboardState* keyboardState);
     void UpdateAnimation(int elapsedTime);
+    void UpdateSprintMeter(int elapsedTime);
 
     void Draw() override;
     void Update(int elapsedTime);

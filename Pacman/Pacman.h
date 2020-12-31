@@ -8,27 +8,23 @@
 	#endif
 #endif
 
-#include <vector>
-
 // Include S2D and use namespace
-#include "Wall.h"
 #include "S2D/S2D.h"
 using namespace S2D;
 
 // Include our types
 #include "MenuState.h"
-#include "SimpleAnimatedEntity.h"
+#include "Player.h"
 #include "Cherry.h"
 #include "Munchie.h"
-#include "Player.h"
+#include "Wall.h"
 #include "GhostEnemy.h"
 
 // Screen width and height
 #define SCREEN_WIDTH 512
 #define SCREEN_HEIGHT 658
-
-// Number of animation frames for player and munchie
-#define MUNCHIE_FRAMES 2
+#define GAME_OVER_SCORE_X 263
+#define GAME_OVER_SCORE_Y 360
 
 // Number of entities of each type to spawn
 #define MUNCHIE_COUNT 50
@@ -60,17 +56,21 @@ private:
 	Texture2D* _wallTexture;
 	Texture2D* _ghostTexture;
 
-	// Current number of collisions (TODO remove when actual handling)
+	// Current number of collisions
 	int _collisionCount;
 	
-	// Position for debug string
-	Vector2* _stringPosition;
+	// Position for score display
+	Vector2* _gameScorePosition;
+	Vector2* _gameOverScorePosition;
 
 	/// <summary> Check the start menu input </summary>
 	void CheckStart(Input::KeyboardState* keyboardState, Input::Keys startKey);
 
 	/// <summary> Check the pause menu input </summary>
 	void CheckPaused(Input::KeyboardState* keyboardState, Input::Keys pauseKey);
+
+	/// <summary> Check the pause menu input </summary>
+	void CheckQuit(Input::KeyboardState* keyboardState);
 
 	/// <summary> Check and handle collisions between pacman and munchies </summary>
 	void CheckFoodCollisions();

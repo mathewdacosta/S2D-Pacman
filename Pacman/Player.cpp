@@ -1,8 +1,5 @@
 ﻿#include "Player.h"
 
-#include "Food.h"
-
-
 Player::Player()
 {
     _position = new Vector2(350.0f, 350.0f);
@@ -24,18 +21,18 @@ void Player::LoadTexture()
     _texture->Load("Textures/Pacman.png", false);
 }
 
-
 void Player::Update(int elapsedTime)
 {
-    if (_dead)
-        // TODO update death animation
-        return;
+    UpdateSprintMeter(elapsedTime);
     
-    // Update movement according to input
-    UpdatePosition(elapsedTime);
+    if (!_dead)
+    {
+        // Update movement according to input
+        UpdatePosition(elapsedTime);
 
-    // Check whether Pacman is off viewport boundaries
-    CheckViewportCollision();
+        // Check whether Pacman is off viewport boundaries
+        CheckViewportCollision();
+    }
 
     // Update animation frames
     UpdateAnimation(elapsedTime);
@@ -44,20 +41,23 @@ void Player::Update(int elapsedTime)
 void Player::Draw()
 {
     // Draw player if not dead
+    SpriteBatch::Draw(_texture, _position, _sourceRect);
+}
+
+bool Player::IsDeathAnimationComplete() const
+{
+    return _dead && _animFrame > 6;
+}
+
+void Player::Kill()
+{
     if (!_dead)
     {
-        SpriteBatch::Draw(_texture, _position, _sourceRect);
+        _dead = true;
+        // Reset animation variables in prep for death animation
+        _animFrame = 0;
+        _animCurrentTime = 0;
     }
-}
-
-bool Player::IsDead() const
-{
-    return _dead;
-}
-
-void Player::SetDead(const bool dead)
-{
-    this->_dead = dead;
 }
 
 Vector2* Player::GetPosition()
@@ -150,9 +150,29 @@ void Player::UpdateAnimation(int elapsedTime)
     }
 
     // Update Pacman direction
-    _sourceRect->Y = _sourceRect->Height * static_cast<int>(_direction);
+    int row;
+    if (_dead)
+    {
+        row = 4;
+    }
+    else
+        row = static_cast<int>(_direction);
+    
+    _sourceRect->Y = _sourceRect->Height * row;
 }
 
+
+void Player::UpdateSprintMeter(int elapsedTime)
+{
+    if (_sprintKeyDown && _sprintMeter > 0)
+    {
+        _sprintMeter -= elapsedTime * _cSprintDepleteRate;
+    }
+    else if (_sprintMeter < _cSprintMaximum)
+    {
+        _sprintMeter += elapsedTime * _cSprintRecoveryRate;
+    }
+}
 
 void Player::UpdatePosition(int elapsedTime)
 {
@@ -160,7 +180,10 @@ void Player::UpdatePosition(int elapsedTime)
 
     if (_sprintKeyDown)
     {
-        movementAmount *= _cSprintSpeedMultiplier;
+        if (_sprintMeter > 0)
+        {
+            movementAmount *= _cSprintSpeedMultiplier;
+        }
     }
 
     // Move in current facing direction by current move amount

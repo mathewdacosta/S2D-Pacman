@@ -14,6 +14,7 @@ struct MenuState
 
     bool pKeyDown;
 
+    Texture2D* gameOverBackground;
     Texture2D* mainMenuBackground;
     Texture2D* overlayBackground;
     Rect* overlayRect;
