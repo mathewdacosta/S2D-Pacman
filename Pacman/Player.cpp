@@ -7,7 +7,7 @@ Player::Player()
 {
     _position = new Vector2(350.0f, 350.0f);
     _direction = MoveDirection::Right;
-    _sourceRect = new Rect(0.0f, 0.0f, 32, 32);
+    _sourceRect = new Rect(0.0f, 0.0f, 27, 27);
     _texture = nullptr;
 }
 
