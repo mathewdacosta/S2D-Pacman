@@ -1,5 +1,5 @@
-# FOGGS-Pacman
-A Pac-Man clone built in C++ using the S2D library.
+# S2D-Pacman
+A Pac-Man clone built in C++.
 
 ## Controls
 
